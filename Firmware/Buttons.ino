@@ -8,10 +8,10 @@ const byte DEBOUCE_MS = 100;
 
 void setup_buttons()
 {
-  Wire.begin(PIN_SDA, PIN_SCL);
-
+  //Wire.begin(PIN_SDA, PIN_SCL);
+  Wire.begin(0, 2);
 #ifdef DEBUG
-  scanDevices();
+  //scanDevices();
 #endif
   setup_capacitive();
 }

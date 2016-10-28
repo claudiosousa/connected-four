@@ -161,11 +161,11 @@ void mqtt_callback(char* _topic, byte* payload, unsigned int length) {        //
   }
 
   /////////////////////////////////////////////////////////////////////// USER STATUS
-  if (topic == String(device_id + "/userstatus")) {
+  if (topic == String(device_id + "/user_turn")) {
 #ifdef DEBUG
     Serial.println("Message is for setting user's status ");
 #endif
-    userstatussetting(msg);
+    user_turnsetting(msg);
     return;
   }
 

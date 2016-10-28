@@ -1,4 +1,6 @@
 #define DEBUG
+//#define WS_79_LEDS //if using a 79 led strip
+#define CAP_MRP121 //if using the capacitiv IC MRP121, instead of CAP1188
 
 const String device_id = String(ESP.getChipId(), HEX); // Get the ID of the ESP8266 device
 
@@ -8,11 +10,9 @@ void setup() {
 #endif
 
   setup_ws();           
-  setup_sound();       
-
+  setup_sound();
   setup_buttons();      
-  setup_wifi();         
-  setup_user();         
+  setup_wifi();          
   setup_OTA();          
   setup_mqtt();
 }

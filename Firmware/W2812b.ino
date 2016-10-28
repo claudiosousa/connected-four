@@ -1,11 +1,6 @@
-/* Display management with WS2812b leds */
-
 #include <NeoPixelBus.h>
 
-const int dispdim = 2; // 1 = display with 43 leds, 2 = display with 79 leds.
-
-//NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod> * led;
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> * led;         //Initialise a pointer for the led's datas. 
+NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> * leds;         //Initialise a pointer for the led's datas.
 
 boolean newpiece = false, canplayswinlost = true;           //Is a new piece is adding. Used when last piece is added ( don't stop the fall down process)
 unsigned long addpiecemillis, winlostmillis;                //Time delay
@@ -21,10 +16,12 @@ int rowwin[7], colwin[7];         // Winner's leds coordinates
 int indexled(int row, int col) {  //Give the lineare index depending if display is with 43 or 79 leds from matrix coordinates
   int index;
 
-  if (dispdim == 1)
-    index = (row * 7 + col) * dispdim ;
-  else
-    index = (row * 7 + col) * dispdim - row;
+#ifdef WS_79_LEDS
+  index = (row * 7 + col) * 2 - row;
+#else
+  index = row * 7 + col ;
+#endif
+
   return index;
 
 }
@@ -33,34 +30,37 @@ int indexled(int row, int col) {  //Give the lineare index depending if display 
 int indexled(int ledindex) {    //Convert the lineare index depending if display is with 43 or 79 leds
   int index;
 
-  if (dispdim == 1)
-    index = ledindex * dispdim;
-  else
-    index = ledindex * dispdim - ledindex / 7;
+#ifdef WS_79_LEDS
+  index = ledindex * 2 - ledindex / 7;
+#else
+  index = ledindex;
+#endif
   return index;
-
 }
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setup_ws() {            //Setup the display
 
-  if (dispdim == 1)          //48 or 79 leds
-    Nbr_LEDS = 43;
-  else
-    Nbr_LEDS = 79;
+#ifdef WS_79_LEDS
+  Nbr_LEDS = 79;
+#else
+  Nbr_LEDS = 43;
+#endif
+
 
   //led = new NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod>(Nbr_LEDS, PIN_WS);
-  
-  //Pin Not used by the methode "Neo800KbpsMethod". This methode use the RX0 pin (GIPO03)  
-  led = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(Nbr_LEDS, 2);
 
-  led->Begin();
+  //Pin Not used by the methode "Neo800KbpsMethod". This methode use the RX0 pin (GIPO03)
+  leds = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(Nbr_LEDS, 2);
+
+  leds->Begin();
 
   HslColor black = HslColor(0, 0, 0);
 
-   for (int i = 0; i < Nbr_LEDS; i++) {          //turn off the display
-    led->SetPixelColor(i, i%2==0?HslColor(0, 1, 0.5):HslColor(.3, 1, 0.5));
+  for (int i = 0; i < Nbr_LEDS; i++) {          //turn off the display
+    leds->SetPixelColor(i, i % 2 == 0 ? HslColor(0, 1, 0.5) : HslColor(.3, 1, 0.5));
   }
-  led->Show();
+  leds->Show();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,8 +75,8 @@ void addpiece_ws(String msg) {                //Decode the payload for a new pie
 #endif
   playssubmitMovesound();                     //Start to play "submit move" sound
 
-//Extract character by character the informations from payload message.
-  
+  //Extract character by character the informations from payload message.
+
   infonum = 0;
   cptpossubmsg = 0;
 
@@ -124,9 +124,9 @@ void addpiece_ws(String msg) {                //Decode the payload for a new pie
           Serial.println(struserstat);
 #endif
           if ( struserstat == "0" )
-            userstatus = false;
+            user_turn = false;
           if ( struserstat == "1" )
-            userstatus = true;
+            user_turn = true;
           break;
 
         default:
@@ -178,14 +178,14 @@ void closeaddpiece_ws() {         // Stop the fall down process. Put the new pie
 #endif
 
   for (cpt = ledrow + 1; cpt <= 5; cpt++) {
-    led->SetPixelColor(indexled(cpt, ledcol), HslColor(0, 0, 0));
+    leds->SetPixelColor(indexled(cpt, ledcol), HslColor(0, 0, 0));
 #ifdef DEBUG
     Serial.print("row to put to black : ");
     Serial.println(cpt);
 #endif
   }
-  led->SetPixelColor(indexled(ledrow, ledcol), HslColor(ledhue, 1, ledlum));
-  led->Show();
+  leds->SetPixelColor(indexled(ledrow, ledcol), HslColor(ledhue, 1, ledlum));
+  leds->Show();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -290,12 +290,12 @@ void matrix_ws(String msg) {        //Decode the payload for a matrix on display
 #endif
 
   for (cptled = 0; cptled < 42; cptled++) {
-    led->SetPixelColor(indexled(cptled), HslColor(hue[cptled], 1, lum[cptled]));
+    leds->SetPixelColor(indexled(cptled), HslColor(hue[cptled], 1, lum[cptled]));
   }
 #ifdef DEBUG
   Serial.println("Show matrix");
 #endif
-  led->Show();
+  leds->Show();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -402,12 +402,12 @@ void row_ws(String msg) {                //Decode the payload for a row on displ
 #endif
 
   for (cptled = 0; cptled < 7; cptled++) {
-    led->SetPixelColor(indexled(row, cptled), HslColor(hue[cptled], 1, lum[cptled]));
+    leds->SetPixelColor(indexled(row, cptled), HslColor(hue[cptled], 1, lum[cptled]));
   }
 #ifdef DEBUG
   Serial.println("Show row");
 #endif
-  led->Show();
+  leds->Show();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -509,7 +509,7 @@ void boardsetting(String msg) {             //Decode the payload to set up the b
 
       if (cptinfo > 4) {
         code = strsubmsg.toInt();
-        led->SetPixelColor(indexled(cptinfo - 5), HslColor(hue[code], 1, lum[code]));
+        leds->SetPixelColor(indexled(cptinfo - 5), HslColor(hue[code], 1, lum[code]));
 
 #ifdef DEBUG
         Serial.print("led : ");
@@ -522,14 +522,14 @@ void boardsetting(String msg) {             //Decode the payload to set up the b
     }
     cptposmsg++;
   }
-  led->Show();
+  leds->Show();
 }
 
 void loop_user() {        //Blink the led when neded.
 
   float steplum;
 
-  if (userstatus == false) {        //Not user's turn
+  if (user_turn == false) {        //Not user's turn
     blinklum = devicecolor[1];
     blinkmillis = millis();
     lumstep = 20;
@@ -553,9 +553,9 @@ void loop_user() {        //Blink the led when neded.
     }
   }
 
-  
-  led->SetPixelColor(Nbr_LEDS-1, HslColor(devicecolor[0], 1, blinklum));
-  led->Show();
+
+  leds->SetPixelColor(Nbr_LEDS - 1, HslColor(devicecolor[0], 1, blinklum));
+  leds->Show();
 
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -567,7 +567,7 @@ void gamefinished_ws(String msg) {                //Decode the payload when game
   char submsg[32];
   String strsubmsg;
 
-  userstatus = true;      // Put to blink user's led
+  user_turn = true;      // Put to blink user's led
   winlostmillis = millis();
   winlostonoffstat = 0;
 
@@ -679,13 +679,13 @@ void loop_ws() {
     Serial.println(cptledlum, 6);
 #endif
 
-    led->SetPixelColor( indexled(cptledrow, ledcol), HslColor(ledhue, 1, cptledlum));
+    leds->SetPixelColor( indexled(cptledrow, ledcol), HslColor(ledhue, 1, cptledlum));
     if (cptledrow < 5) {
-      led->SetPixelColor( indexled(cptledrow + 1, ledcol), HslColor(ledhue, 1, floor( (ledlum - cptledlum) * 100) / 100 ));
+      leds->SetPixelColor( indexled(cptledrow + 1, ledcol), HslColor(ledhue, 1, floor( (ledlum - cptledlum) * 100) / 100 ));
     }
-    led->Show();
+    leds->Show();
 
-    cptledlum = cptledlum + ledlum / 9; 
+    cptledlum = cptledlum + ledlum / 9;
     if ( cptledlum > ledlum ) {
       cptledlum = 0;
       cptledrow--;
@@ -699,7 +699,7 @@ void loop_ws() {
   /////////////////////////////////////////////////////////////////////// Win / Lost loop
 
   //Wait until addpiece fall down process is ending after receiving "Game finished" message and start playing the right sound and blink the winner's leds
-  
+
   if (newpiece == false && winloststatus != -1 && (millis() - winlostmillis >= 250) ) {
     winlostmillis = millis();
 
@@ -715,9 +715,9 @@ void loop_ws() {
     }
 
     for (cpt = 0; cpt < nbrwinleds; cpt++) {
-      led->SetPixelColor( indexled(rowwin[cpt], colwin[cpt]), HslColor(huewin, 1, lumwin * winlostonoffstat));
+      leds->SetPixelColor( indexled(rowwin[cpt], colwin[cpt]), HslColor(huewin, 1, lumwin * winlostonoffstat));
     }
-    led->Show();
+    leds->Show();
     if (winlostonoffstat == 0)
       winlostonoffstat = 1;
     else

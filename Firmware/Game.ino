@@ -1,31 +1,12 @@
-
-
-boolean userstatus;             // Is user's turn. Last WS2812b led blink when = 1, 0 = stay illuminated
-boolean startgame = true;       // To play start sound at start
+boolean game_start = true;
+boolean user_turn = false; 
+float devicecolor[2] = {0, 0};
 int winloststatus = -1;           // -1 = play game, 0 = lost game, 1 = win game
-
-
-
-float devicecolor[2];                           //User's color. [0] = hue, [1] = lum
-
 float blinklum = 0, dir = -1, lumstep;          //Blink the user's LED
-unsigned long blinkmillis;                      //Duration of the blink
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void setup_user () {        // Setup the user's colors. By default = black, no blink.
-
-  devicecolor[0] = 0; // hue
-  devicecolor[1] = 0; // Lum
-  userstatus = false;
-
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+unsigned long blinkmillis;                     
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void devicecolorsetting(String msg) {           //Decode the MQTT message 
-
+void devicecolorsetting(String msg) {       
   unsigned int cptposmsg, cptpossubmsg;
   int infonum;
   String strledhue, strledlum, struserstat;
@@ -77,9 +58,9 @@ void devicecolorsetting(String msg) {           //Decode the MQTT message
           Serial.println(struserstat);
 #endif
           if ( struserstat == "0" )
-            userstatus = false;
+            user_turn = false;
           if ( struserstat == "1" )
-            userstatus = true;
+            user_turn = true;
           break;
 
         default:
@@ -104,7 +85,7 @@ void devicecolorsetting(String msg) {           //Decode the MQTT message
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void userstatussetting(String msg) {              //Setup the user's status
+void user_turnsetting(String msg) {              //Setup the user's status
 
   unsigned int cptposmsg, cptpossubmsg;
   int infonum;
@@ -114,7 +95,7 @@ void userstatussetting(String msg) {              //Setup the user's status
 #ifdef DEBUG
   Serial.println("Decode message for user's status.");
   Serial.print("Old status is : ");
-  Serial.println(userstatus);
+  Serial.println(user_turn);
 #endif
 
   infonum = 0;
@@ -154,13 +135,13 @@ void userstatussetting(String msg) {              //Setup the user's status
     }
   }
   if ( 1 == strinfo.toInt() )
-    userstatus = true;
+    user_turn = true;
   else
-    userstatus = false;
+    user_turn = false;
 
 #ifdef DEBUG
   Serial.println("Old status is : ");
-  Serial.println(userstatus);
+  Serial.println(user_turn);
 #endif
 
 }

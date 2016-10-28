@@ -1,33 +1,41 @@
 #include <NeoPixelBus.h>
 
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> * leds;         //Initialise a pointer for the led's datas.
+NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>*
+    leds;  // Initialise a pointer for the led's datas.
 
-boolean newpiece = false, canplayswinlost = true;           //Is a new piece is adding. Used when last piece is added ( don't stop the fall down process)
-unsigned long addpiecemillis, winlostmillis;                //Time delay
-int cptledrow;                                              //For the loops process, add a piece with fall down
-float ledcol, ledrow, ledhue, ledlum, cptledlum;            //For the loops process, add a piece with fall down
+boolean newpiece = false, canplayswinlost = true;  // Is a new piece is adding.
+                                                   // Used when last piece is
+                                                   // added ( don't stop the
+                                                   // fall down process)
+unsigned long addpiecemillis, winlostmillis;  // Time delay
+int cptledrow;  // For the loops process, add a piece with fall down
+float ledcol, ledrow, ledhue, ledlum,
+    cptledlum;  // For the loops process, add a piece with fall down
 int Nbr_LEDS;
 
-int nbrwinleds, winlostonoffstat; // number of winner's leds. On off blink status for win, lost game
-float huewin, lumwin;             // hue and lum of winner's pieces
-int rowwin[7], colwin[7];         // Winner's leds coordinates
+int nbrwinleds, winlostonoffstat;  // number of winner's leds. On off blink
+                                   // status for win, lost game
+float huewin, lumwin;              // hue and lum of winner's pieces
+int rowwin[7], colwin[7];          // Winner's leds coordinates
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int indexled(int row, int col) {  //Give the lineare index depending if display is with 43 or 79 leds from matrix coordinates
+int indexled(int row,
+             int col) {  // Give the lineare index depending if display is with
+                         // 43 or 79 leds from matrix coordinates
   int index;
 
 #ifdef WS_79_LEDS
   index = (row * 7 + col) * 2 - row;
 #else
-  index = row * 7 + col ;
+  index = row * 7 + col;
 #endif
 
   return index;
-
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int indexled(int ledindex) {    //Convert the lineare index depending if display is with 43 or 79 leds
+int indexled(int ledindex) {  // Convert the lineare index depending if display
+                              // is with 43 or 79 leds
   int index;
 
 #ifdef WS_79_LEDS
@@ -39,7 +47,7 @@ int indexled(int ledindex) {    //Convert the lineare index depending if display
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void setup_ws() {            //Setup the display
+void setup_ws() {  // Setup the display
 
 #ifdef WS_79_LEDS
   Nbr_LEDS = 79;
@@ -47,47 +55,51 @@ void setup_ws() {            //Setup the display
   Nbr_LEDS = 43;
 #endif
 
+  // led = new NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod>(Nbr_LEDS,
+  // PIN_WS);
 
-  //led = new NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod>(Nbr_LEDS, PIN_WS);
-
-  //Pin Not used by the methode "Neo800KbpsMethod". This methode use the RX0 pin (GIPO03)
+  // Pin Not used by the methode "Neo800KbpsMethod". This methode use the RX0
+  // pin (GIPO03)
   leds = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(Nbr_LEDS, 2);
 
   leds->Begin();
 
   HslColor black = HslColor(0, 0, 0);
 
-  for (int i = 0; i < Nbr_LEDS; i++) {          //turn off the display
-    leds->SetPixelColor(1, black);//i, i % 2 == 0 ? HslColor(0, 1, 0.5) : HslColor(.3, 1, 0.5));
+  for (int i = 0; i < Nbr_LEDS; i++) {  // turn off the display
+    leds->SetPixelColor(
+        1,
+        black);  // i, i % 2 == 0 ? HslColor(0, 1, 0.5) : HslColor(.3, 1, 0.5));
   }
   leds->Show();
-  
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void addpiece_ws(String msg) {                //Decode the payload for a new piece
+void addpiece_ws(String msg) {  // Decode the payload for a new piece
   unsigned int cptposmsg, cptpossubmsg;
   int infonum, lednum;
-  String  strledcol, strledrow, strledhue, strledlum, struserstat;
+  String strledcol, strledrow, strledhue, strledlum, struserstat;
   char submes[16];
 
 #ifdef DEBUG
   Serial.println("Decoding message for addpiece.");
 #endif
-  playssubmitMovesound();                     //Start to play "submit move" sound
+  play_submitmove();  // Start to play "submit move" sound
 
-  //Extract character by character the informations from payload message.
+  // Extract character by character the informations from payload message.
 
   infonum = 0;
   cptpossubmsg = 0;
 
-  for ( cptposmsg = 0; cptposmsg <= msg.length(); cptposmsg++) { //Char by char, from the begin to the end of the payload message
+  for (cptposmsg = 0; cptposmsg <= msg.length();
+       cptposmsg++) {  // Char by char, from the begin to the end of the payload
+                       // message
 
-    if ( msg[cptposmsg] != '|' && /*msg[cptposmsg] == '\0'*/ cptposmsg != msg.length() ) {
+    if (msg[cptposmsg] != '|' &&
+        /*msg[cptposmsg] == '\0'*/ cptposmsg != msg.length()) {
       submes[cptpossubmsg] = msg[cptposmsg];
       cptpossubmsg++;
-    }
-    else {
+    } else {
       submes[cptpossubmsg] = '\0';
       cptpossubmsg = 0;
       infonum++;
@@ -100,13 +112,12 @@ void addpiece_ws(String msg) {                //Decode the payload for a new pie
 #endif
 
       switch (infonum) {
-
         case 1:
           strledrow = String(submes);
           break;
 
         case 2:
-          //ledcol = submes.string().ToFloat();
+          // ledcol = submes.string().ToFloat();
           strledcol = String(submes);
           break;
 
@@ -124,10 +135,8 @@ void addpiece_ws(String msg) {                //Decode the payload for a new pie
           Serial.print("struserstat = ");
           Serial.println(struserstat);
 #endif
-          if ( struserstat == "0" )
-            user_turn = false;
-          if ( struserstat == "1" )
-            user_turn = true;
+          if (struserstat == "0") user_turn = false;
+          if (struserstat == "1") user_turn = true;
           break;
 
         default:
@@ -135,16 +144,16 @@ void addpiece_ws(String msg) {                //Decode the payload for a new pie
           Serial.println("case default reach !");
 #endif
           ;
-
       }
     }
   }
-  //Convert datas
+  // Convert datas
   ledcol = strledcol.toFloat();
   ledrow = strledrow.toFloat();
   ledhue = strledhue.toFloat();
   ledlum = strledlum.toFloat();
-  lednum = indexled(ledrow, ledcol); //Rows and columns are inverted in the hardware.
+  lednum = indexled(ledrow,
+                    ledcol);  // Rows and columns are inverted in the hardware.
 
 #ifdef DEBUG
   Serial.print("Valeurs décodées, colonne : ");
@@ -162,13 +171,12 @@ void addpiece_ws(String msg) {                //Decode the payload for a new pie
   cptledrow = 5;
   cptledlum = 0;
   addpiecemillis = millis();
-  newpiece = true;              //Enable the add piece with fall down process
-
-
+  newpiece = true;  // Enable the add piece with fall down process
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void closeaddpiece_ws() {         // Stop the fall down process. Put the new piece at is right place
+void closeaddpiece_ws() {  // Stop the fall down process. Put the new piece at
+                           // is right place
 
   int cpt;
   newpiece = false;
@@ -190,229 +198,7 @@ void closeaddpiece_ws() {         // Stop the fall down process. Put the new pie
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void matrix_ws(String msg) {        //Decode the payload for a matrix on display. Partialy used
-  float hue[42], lum[42];
-  unsigned int cptposmsg, cptpossubmsg;
-  int cptled, cptinfo;
-  char submsg[32];
-  String strsubmsg;
-
-#ifdef DEBUG
-  Serial.println("Matrix received");
-#endif
-
-  for (cptled = 0; cptled < 42; cptled++) {
-    hue[cptled] = 0;
-    lum[cptled] = 0;
-  }
-#ifdef DEBUG
-  Serial.println("Matrix initialised");
-#endif
-
-  cptposmsg = 0;
-  cptpossubmsg = 0;
-  cptled = 0;
-  cptinfo = 0;
-
-  while ( cptposmsg <= msg.length() && cptled < 42 ) {
-
-#ifdef DEBUG
-    Serial.print("cptled : ");
-    Serial.println(cptled);
-    Serial.print("cptposmsg : ");
-    Serial.println(cptposmsg);
-    Serial.print("cptpossubmsg : ");
-    Serial.println(cptpossubmsg);
-    Serial.print("cptinfo : ");
-    Serial.println(cptinfo);
-    Serial.print("submsg : ");
-    Serial.println(String(submsg));
-    Serial.println();
-#endif
-
-    if ( msg[cptposmsg] != '|' && msg[cptposmsg] != '\0') {
-      submsg[cptpossubmsg] = msg[cptposmsg];
-      cptpossubmsg++;
-    }
-    else {
-      submsg[cptpossubmsg] = '\0';
-      cptpossubmsg = 0;
-
-      strsubmsg = String(submsg);
-      switch (cptinfo) {
-        case 0:
-          hue[cptled] = strsubmsg.toFloat();
-#ifdef DEBUG
-          Serial.print("hue : ");
-          Serial.println(strsubmsg);
-          Serial.print("Data stored in hue for led : ");
-          Serial.print(cptled);
-          Serial.print(" ");
-          Serial.println(hue[cptled]);
-          Serial.println();
-#endif
-          break;
-        case 1:
-          lum[cptled] = strsubmsg.toFloat();
-#ifdef DEBUG
-          Serial.print("lum : ");
-          Serial.println(strsubmsg);
-          Serial.print("Data stored in lum for led : ");
-          Serial.print(cptled);
-          Serial.print(" ");
-          Serial.println(lum[cptled]);
-          Serial.println();
-#endif
-          break;
-      }
-
-      cptinfo++;
-      if ( cptinfo > 1 ) {
-        cptinfo = 0;
-        cptled++;
-      }
-    }
-    cptposmsg++;
-  }
-
-#ifdef DEBUG
-  Serial.println("Data are :");
-  for (cptled = 0; cptled < 42; cptled++) {
-    Serial.print("LED number : ");
-    Serial.println(cptled);
-    Serial.print("hue : ");
-    Serial.println(hue[cptled]);
-    Serial.print("lum : ");
-    Serial.println(lum[cptled]);
-    Serial.println();
-  }
-
-  Serial.println("Place data on matrix");
-#endif
-
-  for (cptled = 0; cptled < 42; cptled++) {
-    leds->SetPixelColor(indexled(cptled), HslColor(hue[cptled], 1, lum[cptled]));
-  }
-#ifdef DEBUG
-  Serial.println("Show matrix");
-#endif
-  leds->Show();
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void row_ws(String msg) {                //Decode the payload for a row on display. Partialy used
-  float hue[7], lum[7];
-  unsigned int cptposmsg, cptpossubmsg;
-  int row, cptled, cptinfo;
-  char submsg[32];
-  String strsubmsg;
-
-#ifdef DEBUG
-  Serial.println("Row received");
-#endif
-
-  cptposmsg = 0;
-  cptpossubmsg = 0;
-  cptled = 0;
-  cptinfo = -1;
-
-  while ( cptposmsg <= msg.length() && cptled < 7 ) {
-
-#ifdef DEBUG
-    Serial.print("cptled : ");
-    Serial.println(cptled);
-    Serial.print("cptposmsg : ");
-    Serial.println(cptposmsg);
-    Serial.print("cptpossubmsg : ");
-    Serial.println(cptpossubmsg);
-    Serial.print("cptinfo : ");
-    Serial.println(cptinfo);
-    Serial.print("submsg : ");
-    Serial.println(String(submsg));
-    Serial.println();
-#endif
-
-    if ( msg[cptposmsg] != '|' && msg[cptposmsg] != '\0') {
-      submsg[cptpossubmsg] = msg[cptposmsg];
-      cptpossubmsg++;
-    }
-    else {
-      submsg[cptpossubmsg] = '\0';
-      cptpossubmsg = 0;
-
-      strsubmsg = String(submsg);
-      switch (cptinfo) {
-        case -1:
-          row = strsubmsg.toFloat();
-#ifdef DEBUG
-          Serial.print("row : ");
-          Serial.println(strsubmsg);
-#endif
-          break;
-        case 0:
-          hue[cptled] = strsubmsg.toFloat();
-#ifdef DEBUG
-          Serial.print("hue : ");
-          Serial.println(strsubmsg);
-          Serial.print("Data stored in hue for led : ");
-          Serial.print(cptled);
-          Serial.print(" ");
-          Serial.println(hue[cptled]);
-          Serial.println();
-#endif
-          break;
-        case 1:
-          lum[cptled] = strsubmsg.toFloat();
-#ifdef DEBUG
-          Serial.print("lum : ");
-          Serial.println(strsubmsg);
-          Serial.print("Data stored in lum for led : ");
-          Serial.print(cptled);
-          Serial.print(" ");
-          Serial.println(lum[cptled]);
-          Serial.println();
-#endif
-          break;
-
-      }
-
-      cptinfo++;
-      if ( cptinfo > 1 ) {
-        cptinfo = 0;
-        cptled++;
-      }
-    }
-    cptposmsg++;
-  }
-
-#ifdef DEBUG
-  Serial.println("Data are :");
-  Serial.print("Row : ");
-  Serial.println(row);
-  for (cptled = 0; cptled < 7; cptled++) {
-    Serial.print("LED number : ");
-    Serial.println(cptled);
-    Serial.print("hue : ");
-    Serial.println(hue[cptled]);
-    Serial.print("lum : ");
-    Serial.println(lum[cptled]);
-    Serial.println();
-  }
-
-  Serial.println("Place data on row");
-#endif
-
-  for (cptled = 0; cptled < 7; cptled++) {
-    leds->SetPixelColor(indexled(row, cptled), HslColor(hue[cptled], 1, lum[cptled]));
-  }
-#ifdef DEBUG
-  Serial.println("Show row");
-#endif
-  leds->Show();
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void boardsetting(String msg) {             //Decode the payload to set up the board
+void boardsetting(String msg) {  // Decode the payload to set up the board
   float hue[3], lum[3];
   int code = 0;
   unsigned int cptposmsg, cptpossubmsg;
@@ -437,17 +223,14 @@ void boardsetting(String msg) {             //Decode the payload to set up the b
   /*cptled = 0;*/
   cptinfo = 0;
 
-  while ( cptposmsg <= msg.length() && (cptinfo - 5) < 42 ) {
-
-
-    if ( (msg[cptposmsg] != '|' && msg[cptposmsg] != '\0') && (cptinfo < 4)) {
+  while (cptposmsg <= msg.length() && (cptinfo - 5) < 42) {
+    if ((msg[cptposmsg] != '|' && msg[cptposmsg] != '\0') && (cptinfo < 4)) {
       submsg[cptpossubmsg] = msg[cptposmsg];
       cptpossubmsg++;
       /* #ifdef DEBUG
             Serial.print("cptinfo <=4, decoding one char before | or \0");
         #endif */
-    }
-    else {
+    } else {
       if (cptinfo >= 4) {
         submsg[cptpossubmsg] = msg[cptposmsg];
         cptpossubmsg++;
@@ -510,7 +293,8 @@ void boardsetting(String msg) {             //Decode the payload to set up the b
 
       if (cptinfo > 4) {
         code = strsubmsg.toInt();
-        leds->SetPixelColor(indexled(cptinfo - 5), HslColor(hue[code], 1, lum[code]));
+        leds->SetPixelColor(indexled(cptinfo - 5),
+                            HslColor(hue[code], 1, lum[code]));
 
 #ifdef DEBUG
         Serial.print("led : ");
@@ -518,7 +302,6 @@ void boardsetting(String msg) {             //Decode the payload to set up the b
         Serial.print("Player : ");
         Serial.println(code);
 #endif
-
       }
     }
     cptposmsg++;
@@ -526,41 +309,34 @@ void boardsetting(String msg) {             //Decode the payload to set up the b
   leds->Show();
 }
 
-void loop_user() {        //Blink the led when neded.
+void loop_user() {  // Blink the led when neded.
 
   float steplum;
 
-  if (user_turn == false) {        //Not user's turn
+  if (user_turn == false) {  // Not user's turn
     blinklum = devicecolor[1];
     blinkmillis = millis();
     lumstep = 20;
     dir = -1;
-  }
-  else {
-    //Serial.print("-");
+  } else {
+    // Serial.print("-");
     if (millis() - blinkmillis >= 20) {
-
-      //Serial.println(".");
+      // Serial.println(".");
       blinkmillis = millis();
       steplum = devicecolor[1] / 20;
       lumstep = lumstep + dir;
-      if (lumstep >= 50)
-        dir = -1;
-      if (lumstep <= 0)
-        dir = 1;
+      if (lumstep >= 50) dir = -1;
+      if (lumstep <= 0) dir = 1;
 
       blinklum = steplum * lumstep;
-
     }
   }
 
-
   leds->SetPixelColor(Nbr_LEDS - 1, HslColor(devicecolor[0], 1, blinklum));
   leds->Show();
-
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void gamefinished_ws(String msg) {                //Decode the payload when game is finished
+void gamefinished_ws(String msg) {  // Decode the payload when game is finished
 
   int code = 0;
   unsigned int cptposmsg, cptpossubmsg;
@@ -568,7 +344,7 @@ void gamefinished_ws(String msg) {                //Decode the payload when game
   char submsg[32];
   String strsubmsg;
 
-  user_turn = true;      // Put to blink user's led
+  user_turn = true;  // Put to blink user's led
   winlostmillis = millis();
   winlostonoffstat = 0;
 
@@ -580,17 +356,14 @@ void gamefinished_ws(String msg) {                //Decode the payload when game
   cptpossubmsg = 0;
   cptinfo = 0;
 
-  while ( cptposmsg < msg.length() ) {
-
-
-    if ( (msg[cptposmsg] != '|' && msg[cptposmsg] != '\0') && (cptinfo < 3)) {
+  while (cptposmsg < msg.length()) {
+    if ((msg[cptposmsg] != '|' && msg[cptposmsg] != '\0') && (cptinfo < 3)) {
       submsg[cptpossubmsg] = msg[cptposmsg];
       cptpossubmsg++;
       /* #ifdef DEBUG
             Serial.print("cptinfo < 3, decoding one char before | or \0");
         #endif */
-    }
-    else {
+    } else {
       if (cptinfo >= 3) {
         submsg[cptpossubmsg] = msg[cptposmsg];
         cptpossubmsg++;
@@ -612,7 +385,6 @@ void gamefinished_ws(String msg) {                //Decode the payload when game
         Serial.print("winloststatus = ");
         Serial.println(winloststatus);
 #endif
-
       }
 
       if (cptinfo == 2) {
@@ -643,8 +415,7 @@ void gamefinished_ws(String msg) {                //Decode the payload when game
           Serial.print("row = ");
           Serial.println(rowwin[int(floor(cptinfo / 2) - 2)]);
 #endif
-        }
-        else {
+        } else {
           colwin[int(floor(cptinfo / 2) - 2)] = code;
 #ifdef DEBUG
           Serial.print("cptinfo = ");
@@ -655,7 +426,6 @@ void gamefinished_ws(String msg) {                //Decode the payload when game
           Serial.println(colwin[int(floor(cptinfo / 2) - 2)]);
 #endif
         }
-
       }
       nbrwinleds = int(floor(cptinfo / 2) - 2) + 1;
     }
@@ -669,54 +439,61 @@ void gamefinished_ws(String msg) {                //Decode the payload when game
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void loop_ws() {
-
   int cpt;
 
-  /////////////////////////////////////////////////////////////////////// Add piece loop with shading effect
-  if ( (newpiece == true) && (millis() - addpiecemillis >= 10) ) {
+  /////////////////////////////////////////////////////////////////////// Add
+  ///piece loop with shading effect
+  if ((newpiece == true) && (millis() - addpiecemillis >= 10)) {
     addpiecemillis = millis();
 
 #ifdef DEBUG
     Serial.println(cptledlum, 6);
 #endif
 
-    leds->SetPixelColor( indexled(cptledrow, ledcol), HslColor(ledhue, 1, cptledlum));
+    leds->SetPixelColor(indexled(cptledrow, ledcol),
+                        HslColor(ledhue, 1, cptledlum));
     if (cptledrow < 5) {
-      leds->SetPixelColor( indexled(cptledrow + 1, ledcol), HslColor(ledhue, 1, floor( (ledlum - cptledlum) * 100) / 100 ));
+      leds->SetPixelColor(
+          indexled(cptledrow + 1, ledcol),
+          HslColor(ledhue, 1, floor((ledlum - cptledlum) * 100) / 100));
     }
     leds->Show();
 
     cptledlum = cptledlum + ledlum / 9;
-    if ( cptledlum > ledlum ) {
+    if (cptledlum > ledlum) {
       cptledlum = 0;
       cptledrow--;
     }
 
-    if ( cptledrow < ledrow ) {
+    if (cptledrow < ledrow) {
       newpiece = false;
     }
   }
 
-  /////////////////////////////////////////////////////////////////////// Win / Lost loop
+  /////////////////////////////////////////////////////////////////////// Win /
+  ///Lost loop
 
-  //Wait until addpiece fall down process is ending after receiving "Game finished" message and start playing the right sound and blink the winner's leds
+  // Wait until addpiece fall down process is ending after receiving "Game
+  // finished" message and start playing the right sound and blink the winner's
+  // leds
 
-  if (newpiece == false && winloststatus != -1 && (millis() - winlostmillis >= 250) ) {
+  if (newpiece == false && winloststatus != -1 &&
+      (millis() - winlostmillis >= 250)) {
     winlostmillis = millis();
 
     if (winloststatus != -1 && canplayswinlost) {
       if (winloststatus == 0) {
-        playsgameOversound();
+        play_gameover();
         canplayswinlost = false;
-      }
-      else {
-        playswinsound();
+      } else {
+        play_win();
         canplayswinlost = false;
       }
     }
 
     for (cpt = 0; cpt < nbrwinleds; cpt++) {
-      leds->SetPixelColor( indexled(rowwin[cpt], colwin[cpt]), HslColor(huewin, 1, lumwin * winlostonoffstat));
+      leds->SetPixelColor(indexled(rowwin[cpt], colwin[cpt]),
+                          HslColor(huewin, 1, lumwin * winlostonoffstat));
     }
     leds->Show();
     if (winlostonoffstat == 0)
@@ -724,6 +501,4 @@ void loop_ws() {
     else
       winlostonoffstat = 0;
   }
-
-
 }

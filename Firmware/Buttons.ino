@@ -5,13 +5,11 @@ const byte PIN_SDA = 5;
 
 const byte DEBOUCE_MS = 100;
 
-
-void setup_buttons()
-{
-  //Wire.begin(PIN_SDA, PIN_SCL);
+void setup_buttons() {
+  // Wire.begin(PIN_SDA, PIN_SCL);
   Wire.begin(0, 2);
 #ifdef DEBUG
-  //scanDevices();
+// scanDevices();
 #endif
   setup_capacitive();
 }
@@ -22,42 +20,35 @@ void scanDevices() {
 
   Serial.println("Scanning I2C devices...");
 
-  for (address = 1; address < 127; address++ )
-  {
+  for (address = 1; address < 127; address++) {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
 
     if (!error) {
       Serial.print("I2C device found at address 0x");
-      if (address < 16)
-        Serial.print("0");
+      if (address < 16) Serial.print("0");
       Serial.print(address, HEX);
       Serial.println(" !");
 
       nb_devices++;
     } else if (error == 4) {
       Serial.print("Unknow error at address 0x");
-      if (address < 16)
-        Serial.print("0");
+      if (address < 16) Serial.print("0");
       Serial.println(address, HEX);
     }
   }
-  if (!nb_devices)
-    Serial.println("No I2C devices found\n");
+  if (!nb_devices) Serial.println("No I2C devices found\n");
 }
 
 unsigned long last_buttons_read = 0;
 int last_touched_keys;
 void loop_buttons() {
-
-  if ( millis() - last_buttons_read < DEBOUCE_MS)
-    return;
+  if (millis() - last_buttons_read < DEBOUCE_MS) return;
 
   last_buttons_read = millis();
 
   int touched_keys = get_touches();
-  if (!touched_keys || touched_keys == last_touched_keys)
-    return;
+  if (!touched_keys || touched_keys == last_touched_keys) return;
 
   last_touched_keys = touched_keys;
 
@@ -66,7 +57,8 @@ void loop_buttons() {
     if (touched_keys & (1 << i)) {
       publish_mqtt("button/" + device_id, String(i).c_str());
 #ifdef DEBUG
-      Serial.print("Button: "); Serial.println(i);
+      Serial.print("Button: ");
+      Serial.println(i);
 #endif
       return;
     }

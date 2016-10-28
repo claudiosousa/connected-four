@@ -2,7 +2,6 @@
 #include <WiFiManager.h>
 
 void setup_wifi() {
-
   delay(10);
 #ifdef DEBUG
   Serial.println();
@@ -10,8 +9,7 @@ void setup_wifi() {
 #endif
 
   WiFiManager wifiManager;
-  //reset saved settings;
-  //wifiManager.resetSettings();
+  // wifiManager.resetSettings();//reset saved settings;
 
   wifiManager.autoConnect(("Connect4-" + device_id).c_str());
 

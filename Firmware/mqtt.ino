@@ -80,15 +80,15 @@ bool mqtt_reconnect() {               //Connect to MQTT server and subscribe to 
 #ifdef DEBUG
   Serial.print("Attempting MQTT connection...");
 #endif
-  if (client.connect(deviceId.c_str(), mqtt_user, mqtt_password)) {
+  if (client.connect(device_id.c_str(), mqtt_user, mqtt_password)) {
 #ifdef DEBUG
     Serial.print("connected deviceID = ");
-    Serial.println(deviceId);
+    Serial.println(device_id);
 #endif
-    client.subscribe((deviceId + "/#").c_str());
+    client.subscribe((device_id + "/#").c_str());
     client.subscribe("ping");
 
-    publish_mqtt("connected/" + deviceId, "");
+    publish_mqtt("connected/" + device_id, "");
   }
   return client.connected();
 }
@@ -125,19 +125,16 @@ void mqtt_callback(char* _topic, byte* payload, unsigned int length) {        //
 #ifdef DEBUG
     Serial.println("Message is a ping request.");
 #endif
-    publish_mqtt("pong/" + deviceId, "");
+    publish_mqtt("pong/" + device_id, "");
     return;
   }
 
   /////////////////////////////////////////////////////////////////////// GAME FINISHED
-  if (topic == String(deviceId + "/gamefinished")) {
+  if (topic == String(device_id + "/gamefinished")) {
 #ifdef DEBUG
     Serial.println("Message is a game finished.");
 #endif
     gamefinished_ws(msg);
-#ifdef SendACKMsg
-    publish_mqtt("gamefinishedupdated/" + deviceId, msg.c_str());
-#endif
     return;
   }
 
@@ -146,94 +143,73 @@ void mqtt_callback(char* _topic, byte* payload, unsigned int length) {        //
     closeaddpiece_ws();
 
   /////////////////////////////////////////////////////////////////////// ADD PIECE
-  if ( (topic == String(deviceId + "/addpiece")) /*&& (newpiece == false)*/ ) {
+  if ( (topic == String(device_id + "/addpiece")) /*&& (newpiece == false)*/ ) {
 #ifdef DEBUG
     Serial.println("Message is for adding a piece.");
 #endif
     addpiece_ws(msg);
-#ifdef SendACKMsg
-    publish_mqtt("pieceadded/" + deviceId, msg.c_str());
-#endif
     return;
   }
 
   /////////////////////////////////////////////////////////////////////// DEVICE COLOR
-  if (topic == String(deviceId + "/devicecolor")) {
+  if (topic == String(device_id + "/devicecolor")) {
 #ifdef DEBUG
     Serial.println("Message is for setting user's color ");
 #endif
     devicecolorsetting(msg);
-#ifdef SendACKMsg
-    publish_mqtt("devicecolorupdated/" + deviceId, msg.c_str());
-#endif
     return;
   }
 
   /////////////////////////////////////////////////////////////////////// USER STATUS
-  if (topic == String(deviceId + "/userstatus")) {
+  if (topic == String(device_id + "/userstatus")) {
 #ifdef DEBUG
     Serial.println("Message is for setting user's status ");
 #endif
     userstatussetting(msg);
-#ifdef SendACKMsg
-    publish_mqtt("userstatusupdated/" + deviceId, msg.c_str());
-#endif
     return;
   }
 
   /////////////////////////////////////////////////////////////////////// SET BOARD
-  if ( topic == String(deviceId + "/setboard") ) {
+  if ( topic == String(device_id + "/setboard") ) {
 #ifdef DEBUG
     Serial.println("Message is for setting the board ");
 #endif
     boardsetting(msg);
-#ifdef SendACKMsg
-    publish_mqtt("setboardupdated/" + deviceId, msg.c_str());
-#endif
     return;
   }
 
   /////////////////////////////////////////////////////////////////////// MATRIX
-  if (topic == String(deviceId + "/matrix")) {
+  if (topic == String(device_id + "/matrix")) {
 #ifdef DEBUG
     Serial.println("Message is for setting the board (matrix).");
 #endif
     matrix_ws(msg);
-#ifdef SendACKMsg
-    publish_mqtt("matrixupdated/" + deviceId, msg.c_str());
-#endif
     return;
   }
 
   /////////////////////////////////////////////////////////////////////// SET ROW
-  if (topic == String(deviceId + "/setrow")) {
+  if (topic == String(device_id + "/setrow")) {
 #ifdef DEBUG
     Serial.println("Message is for setting a row (matrix).");
 #endif
     row_ws(msg);
-#ifdef SendACKMsg
-    publish_mqtt("rowupdated/" + deviceId, msg.c_str());
-#endif
     return;
   }
 
   /////////////////////////////////////////////////////////////////////// SET VOLUME LEVEL
-  if (topic == String(deviceId + "/volume")) {
+  if (topic == String(device_id + "/volume")) {
 #ifdef DEBUG
     Serial.println("Message is for setting the sound volume.");
 #endif
     setvolume(msg);
-#ifdef SendACKMsg
-    publish_mqtt("volumeupdated/" + deviceId, msg.c_str());
-#endif
     return;
   }
   /////////////////////////////////////////////////////////////////////// Test mqtt messages
-  if (topic == String(deviceId + "/test")) {
+  if (topic == String(device_id + "/test")) {
 #ifdef DEBUG
     Serial.println("Message is a test message.");
 #endif
-    publish_mqtt("testedmessage/" + deviceId, msg.c_str());
+    publish_mqtt("testedmessage/" + device_id, msg.c_str());
     return;
   }
 

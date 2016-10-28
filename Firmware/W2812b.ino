@@ -2,6 +2,8 @@
 
 #include <NeoPixelBus.h>
 
+const int dispdim = 2; // 1 = display with 43 leds, 2 = display with 79 leds.
+
 //NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod> * led;
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> * led;         //Initialise a pointer for the led's datas. 
 
@@ -9,7 +11,7 @@ boolean newpiece = false, canplayswinlost = true;           //Is a new piece is 
 unsigned long addpiecemillis, winlostmillis;                //Time delay
 int cptledrow;                                              //For the loops process, add a piece with fall down
 float ledcol, ledrow, ledhue, ledlum, cptledlum;            //For the loops process, add a piece with fall down
-
+int Nbr_LEDS;
 
 int nbrwinleds, winlostonoffstat; // number of winner's leds. On off blink status for win, lost game
 float huewin, lumwin;             // hue and lum of winner's pieces
@@ -523,6 +525,39 @@ void boardsetting(String msg) {             //Decode the payload to set up the b
   led->Show();
 }
 
+void loop_user() {        //Blink the led when neded.
+
+  float steplum;
+
+  if (userstatus == false) {        //Not user's turn
+    blinklum = devicecolor[1];
+    blinkmillis = millis();
+    lumstep = 20;
+    dir = -1;
+  }
+  else {
+    //Serial.print("-");
+    if (millis() - blinkmillis >= 20) {
+
+      //Serial.println(".");
+      blinkmillis = millis();
+      steplum = devicecolor[1] / 20;
+      lumstep = lumstep + dir;
+      if (lumstep >= 50)
+        dir = -1;
+      if (lumstep <= 0)
+        dir = 1;
+
+      blinklum = steplum * lumstep;
+
+    }
+  }
+
+  
+  led->SetPixelColor(Nbr_LEDS-1, HslColor(devicecolor[0], 1, blinklum));
+  led->Show();
+
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void gamefinished_ws(String msg) {                //Decode the payload when game is finished
 

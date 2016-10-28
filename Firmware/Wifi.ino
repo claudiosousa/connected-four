@@ -1,15 +1,6 @@
-// Connect to the wifi using Wifimanager.h
-
-/* This enable the possibility to connect the game on every wifi hot spot we want.
- *  
- * 
- */
-
-
 #include <ESP8266WiFi.h>
 #include <WiFiManager.h>
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setup_wifi() {
 
   delay(10);
@@ -22,7 +13,7 @@ void setup_wifi() {
   //reset saved settings;
   //wifiManager.resetSettings();
 
-  wifiManager.autoConnect(("Connect4-" + deviceId).c_str());
+  wifiManager.autoConnect(("Connect4-" + device_id).c_str());
 
 #ifdef DEBUG
   Serial.println("");

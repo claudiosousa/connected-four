@@ -1,4 +1,9 @@
-/* Manage the user infos */
+
+
+boolean userstatus;             // Is user's turn. Last WS2812b led blink when = 1, 0 = stay illuminated
+boolean startgame = true;       // To play start sound at start
+int winloststatus = -1;           // -1 = play game, 0 = lost game, 1 = win game
+
 
 
 float devicecolor[2];                           //User's color. [0] = hue, [1] = lum
@@ -16,38 +21,7 @@ void setup_user () {        // Setup the user's colors. By default = black, no b
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void loop_user() {        //Blink the led when neded.
 
-  float steplum;
-
-  if (userstatus == false) {        //Not user's turn
-    blinklum = devicecolor[1];
-    blinkmillis = millis();
-    lumstep = 20;
-    dir = -1;
-  }
-  else {
-    //Serial.print("-");
-    if (millis() - blinkmillis >= 20) {
-
-      //Serial.println(".");
-      blinkmillis = millis();
-      steplum = devicecolor[1] / 20;
-      lumstep = lumstep + dir;
-      if (lumstep >= 50)
-        dir = -1;
-      if (lumstep <= 0)
-        dir = 1;
-
-      blinklum = steplum * lumstep;
-
-    }
-  }
-
-  led->SetPixelColor(Nbr_LEDS-1, HslColor(devicecolor[0], 1, blinklum));
-  led->Show();
-
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void devicecolorsetting(String msg) {           //Decode the MQTT message 

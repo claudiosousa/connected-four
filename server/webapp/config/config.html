@@ -1,0 +1,20 @@
+<link href="config/config.css" rel="stylesheet" />
+
+<div class="page-title">Config</div>
+<div class="player-config-and-color" ng-repeat="gameconf in gameconfig">
+    <div class="player-config">
+        <div class="player-name">
+            <label>Player: </label>
+            <input ng-model="gameconf.name" ng-change="updateConfig(gameconf)" />
+        </div>
+        <div class="player-name">
+            <label>Device: </label>
+            <span>{{gameconf.id}}</span>
+        </div>
+        <div class="player-name">
+            <label>Volume: </label>
+            <input style="width:100%" type="range" min="0" max="9" ng-change="updateConfig(gameconf)" ng-model="gameconf.volume" />
+        </div>
+    </div>
+    <color-slider ng-model="gameconf" on-change="updateConfig(gameconf)" />
+</div>

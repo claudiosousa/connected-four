@@ -58,9 +58,10 @@ void setup_ws() {            //Setup the display
   HslColor black = HslColor(0, 0, 0);
 
   for (int i = 0; i < Nbr_LEDS; i++) {          //turn off the display
-    leds->SetPixelColor(i, i % 2 == 0 ? HslColor(0, 1, 0.5) : HslColor(.3, 1, 0.5));
+    leds->SetPixelColor(1, black);//i, i % 2 == 0 ? HslColor(0, 1, 0.5) : HslColor(.3, 1, 0.5));
   }
   leds->Show();
+  
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

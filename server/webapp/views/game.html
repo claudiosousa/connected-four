@@ -1,0 +1,11 @@
+<h2>Game</h2>
+<div class="game-container">
+    <div class="board-col" ng-repeat="col in gamestate.pieces">
+        <div class="board-cell" ng-repeat="cell in col" style="background-color:hsl({{cell.hue * 360}}, 100%, 50%);">
+        </div>
+    </div>
+</div>
+
+<span ng-if="gamestate.finished" class="game-finished">Game finished</span>
+
+<button ng-click="resetGame()">RESET GAME</button>

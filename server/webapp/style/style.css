@@ -1,0 +1,65 @@
+html, body{
+    height:100%;
+}
+body{
+    font-family: "Myriad Set Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        background: rgba(242,242,242,0.6);
+        margin:0px;
+}
+
+header{
+    background:lightgrey;
+    border-bottom:1px solid black; 
+}
+
+header .top-bar{
+    width: 100%;
+    height: 48px;
+    max-height: 44px;
+    background: rgba(0,0,0,0.8);
+    font-size: 18px;
+    display:flex;
+    align-items: center;
+    position:relative;
+    justify-content: center;
+}
+
+header .top-bar .top-item{
+    height:100%;
+    color:white;
+    font-size: 16px;
+    line-height: 2.75;
+    font-weight: 400;
+    letter-spacing: normal;
+    position: relative;
+    padding: 0 10px;
+    white-space: nowrap;
+    outline-offset: -7px;
+        margin: 0 10px;
+    cursor: pointer;
+}
+    header .top-bar .top-item:hover{
+        opacity: .65;
+    }
+
+    [ng-view]{
+        position:relative;
+        max-width:1024px;
+        margin-left:calc(50% - 512px); 
+        background: white;
+        border-style: solid;
+        top: 0;
+        border-width: 0 1px 0 1px;
+        border-color: #666;
+        min-height: calc(100% - 45px)
+    }
+
+    .page-title{
+        font-weight: 200;
+        letter-spacing: -1.2799999713897705px;
+        font-size: 48px;
+        line-height: 1.0625;
+        text-align: center;
+        padding: 20px 0 20px;
+
+    }

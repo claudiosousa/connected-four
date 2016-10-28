@@ -1,0 +1,30 @@
+    .color-slider .color-slider-range-label {
+        margin-top: 4px;
+    }
+    
+    .color-slider .color-slider-range {
+        height: 30px;
+        position: relative;
+    }
+    
+    .color-slider .slider-background {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0px;
+    }
+    
+    .color-slider input {
+        position: absolute;
+        top: 2px;
+        -webkit-appearance: none;
+        width: 100%;
+        z-index: 1;
+        background: transparent;
+    }
+    
+    .color-result {
+        height: 40px;
+        margin: 0px 10px;
+        width: 100%;
+    }

@@ -1,0 +1,14 @@
+<link href="config/color-slider/color-slider.css" rel="stylesheet" />
+
+<div class="color-slider">
+    <div class="color-slider-range-label">Hue</div>
+    <div class="color-slider-range">
+        <div class="slider-background" ng-style="{background:hueBackground()}"></div>
+        <input type="range" step="0.01" min="1" ng-model="color.hue" max="360" ng-change="onChange()">
+    </div>
+    <div class="color-slider-range-label">Luminosity</div>
+    <div class="color-slider-range">
+        <div class="slider-background" ng-style="{background:luminosityBackground()}"></div>
+        <input type="range" step="0.01" min="1" max="20" ng-model="color.luminosity" ng-change="onChange()">
+    </div>
+</div>

@@ -1,0 +1,13 @@
+{
+    "mqtt": {
+        "host": "mqtt://myurl.cloudmqtt.com",
+        "port": 11993,
+        "clientId": "nodejs",
+        "username": "mqqt_sur",
+        "password": "mqqt_pwd"
+    },
+    "webserver": {
+        "port": 3200,
+        "path": "../webapp"
+    }
+}

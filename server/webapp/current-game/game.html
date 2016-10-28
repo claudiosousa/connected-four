@@ -1,0 +1,22 @@
+<link href="current-game/game.css" rel="stylesheet" />
+
+<div class="page-title">Current Game</div>
+<div class="game-container">
+    <div class="board-col" ng-repeat="col in gamestate.pieces">
+        <div class="board-cell" ng-repeat="cell in col" style="background-color:hsl({{cell.color.hue * 360}}, 100%, {{30+cell.color.luminosity * 100}}%);">
+        </div>
+    </div>
+    <div ng-if="gamestate.finished" class="game-finished">
+        <span class="game-finished-text">Game finished</span>
+    </div>
+</div>
+<br/>
+<div class="game-container">
+    <div class="game-players">
+        <div class="game-player" ng-repeat="player in gamestate.players">
+            <div class="board-cell" style="background-color:hsl({{player.hue * 360}}, 100%, {{30+player.luminosity * 100}}%);"></div>
+            <span style="font-size: 20px;">{{player.name}}</span>
+        </div>
+    </div>
+    <button ng-click="resetGame()" class="reset-button">RESET GAME</button>
+</div>

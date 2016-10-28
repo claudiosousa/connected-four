@@ -1,0 +1,24 @@
+.player-config-and-color {
+    display: flex;
+    max-width: 768px;
+    position: relative;
+    margin-left: calc(50% - 384px);
+    flex-direction: column;
+    margin-bottom: 30px;
+    padding: 20px;
+    outline: 2px solid grey;
+}
+
+.player-config {
+    display: flex;
+}
+
+.player-name {
+    display: flex;
+    width: 50px;
+    flex-grow: 1;
+}
+
+.player-config label {
+    margin-right: 10px;
+}

@@ -1,33 +1,33 @@
 Message + topic doesn’t exceed 124 car.
 
 
-1b74a1/addpiece
+526b6/addpiece
 0|5|.5|.03
 
 0|0|.5|.15|1
 
 
-1b74a1/matrix
+526b6/matrix
 0|.1|.2|.1|.3|.1|.4|.1
 
-1b74a1/matrix
-0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|
+526b6/matrix
+0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|1|
 
-1b74a1/matrix
+526b6/matrix
 0|.1|.2|.1|.3|.1|.4|.1|.5|.1|.66|.1|.75|.1|.75|.1|.75|.1|.88|.1|.95|.1|.95|.1|.95|.1|.95|.1|.95|.1|.33|.1
 
-1b74a1/matrix
+526b6/matrix
 0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0
 
-1b74a1/matrix
+526b6/matrix
 0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|.33|.1|.4|.1|.5|.1|.56|.1|.33|.1|.33|.1|.3|.1|.3|.1
 
-1b74a1/test
+526b6/test
 test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,
 
 
 
-1b74a1/setrow
+526b6/setrow
 0|.0|.4|.0|.4|.0|.4|.0|.4|.0|.4|.0|.4|.0|.4
 
 1|.1|.4|.1|.4|.1|.4|.1|.4|.1|.4|.1|.4|.1|.4
@@ -41,7 +41,7 @@ test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,
 5|.5|.4|.5|.4|.5|.4|.5|.4|.5|.4|.5|.4|.5|.4
 
 
-1b74a1/devicecolor
+526b6/devicecolor
 .33|.5
 
 .22|.5
@@ -63,14 +63,14 @@ test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,
 .88|.2|1
 
 
-1b74a1/userstatus
+526b6/userstatus
 0
 
 1
 
-1b74a1/setboard
+526b6/setboard
 0|.2|.3|.2|012012012012012012012012012012012012012012
 
-1b74a1/gamefinished
+526b6/gamefinished
 0|.7|.2|01122334
 

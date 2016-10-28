@@ -9,8 +9,8 @@ void setup() {
   Serial.begin(115200);
 #endif
 
-  setup_ws();           
   setup_sound();
+  setup_ws();           
   setup_buttons();      
   setup_wifi();          
   setup_OTA();          

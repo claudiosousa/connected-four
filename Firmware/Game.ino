@@ -1,4 +1,3 @@
-boolean game_start = true;
 boolean user_turn = false;
 float devicecolor[2] = {0, 0};
 int winloststatus = -1;  // -1 = play game, 0 = lost game, 1 = win game
@@ -10,14 +9,6 @@ void setdevicecolor(String msg) {
   int infonum;
   String strledhue, strledlum, struserstat;
   char submes[16];
-
-#ifdef DEBUG
-  Serial.println("Decode message for device's color.");
-  Serial.print("Old color are : ");
-  Serial.print(devicecolor[0]);
-  Serial.print(" / ");
-  Serial.println(devicecolor[1]);
-#endif
 
   infonum = 0;
   cptpossubmsg = 0;

@@ -74,7 +74,8 @@ void mqtt_callback(char* _topic, byte* payload, unsigned int length) {
     return;
   }
 
-  if (newpiece == true) closeaddpiece_ws();
+  if (newpiece == true)
+    closeaddpiece_ws();
 
   if (topic == String(device_id + "/gamefinished")) {
     gamefinished_ws(msg);

@@ -1,13 +1,13 @@
 #include <Wire.h>
 
-const byte PIN_SCL = 4;
-const byte PIN_SDA = 5;
+const byte PIN_SCL = D2;
+const byte PIN_SDA = D1;
 
 const byte DEBOUCE_MS = 100;
 
 void setup_buttons() {
   // Wire.begin(PIN_SDA, PIN_SCL);
-  Wire.begin(0, 2);
+  Wire.begin(PIN_SDA, PIN_SCL);
 #ifdef DEBUG
 // scanDevices();
 #endif

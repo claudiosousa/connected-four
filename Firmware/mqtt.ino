@@ -33,13 +33,11 @@ void loop_mqtt() {
       lastReconnectAttempt = now;
 
       // Attempt to reconnect
-      if (mqtt_reconnect()) {
+      if (mqtt_reconnect()) 
         lastReconnectAttempt = 0;
-      }
     }
-  } else {
+  } else 
     client.loop();
-  }
 }
 
 void publish_mqtt(String topic, const char* msg) {
@@ -47,7 +45,8 @@ void publish_mqtt(String topic, const char* msg) {
 }
 
 void publish_mqtt(const char* topic, const char* msg) {
-  if (msg == NULL) msg = "";
+  if (msg == NULL)
+    msg = "";
   client.publish(topic, msg);
 }
 
@@ -57,43 +56,28 @@ void mqtt_callback(char* _topic, byte* payload, unsigned int length) {
 #endif
 
   char msgArray[length + 1];
-  for (unsigned int i = 0; i < length; i++) {
+  for (unsigned int i = 0; i < length; i++) { //use memset
     msgArray[i] = (char)payload[i];
   }
   msgArray[length] = '\0';
   String msg = String(msgArray);
   String topic = String(_topic);
 
-  if (topic == String("ping")) {
-    publish_mqtt("pong/" + device_id, "");
-    return;
-  }
-
-  if (topic == String(device_id + "/volume")) {
-    setvolume(msg.toInt());
-    return;
-  }
+  if (topic == String("ping"))
+    return publish_mqtt("pong/" + device_id, NULL);
+  if (topic == String(device_id + "/volume"))
+    return setvolume(msg.toInt());
 
   if (newpiece == true)
     closeaddpiece_ws();
 
-  if (topic == String(device_id + "/gamefinished")) {
-    gamefinished_ws(msg);
-    return;
-  }
-
-  if (topic == String(device_id + "/addpiece")) {
-    addpiece_ws(msg);
-    return;
-  }
-
-  if (topic == String(device_id + "/devicecolor")) {
-    setdevicecolor(msg);
-    return;
-  }
-
-  if (topic == String(device_id + "/setboard")) {
-    boardsetting(msg);
-    return;
-  }
+  if (topic == String(device_id + "/gamefinished"))
+    return gamefinished_ws(msg);
+  if (topic == String(device_id + "/addpiece"))
+    return addpiece_ws(msg);
+  if (topic == String(device_id + "/devicecolor"))
+    return setdevicecolor(msgArray);
+  if (topic == String(device_id + "/setboard"))
+    return boardsetting(msg);
 }
+

@@ -1,27 +1,26 @@
 #include <NeoPixelBus.h>
 
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>*
-    leds;  // Initialise a pointer for the led's datas.
+NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* leds;  // Initialise a pointer for the led's datas.
 
 boolean newpiece = false, canplayswinlost = true;  // Is a new piece is adding.
-                                                   // Used when last piece is
-                                                   // added ( don't stop the
-                                                   // fall down process)
+// Used when last piece is
+// added ( don't stop the
+// fall down process)
 unsigned long addpiecemillis, winlostmillis;  // Time delay
 int cptledrow;  // For the loops process, add a piece with fall down
 float ledcol, ledrow, ledhue, ledlum,
-    cptledlum;  // For the loops process, add a piece with fall down
+      cptledlum;  // For the loops process, add a piece with fall down
 int Nbr_LEDS;
 
 int nbrwinleds, winlostonoffstat;  // number of winner's leds. On off blink
-                                   // status for win, lost game
+// status for win, lost game
 float huewin, lumwin;              // hue and lum of winner's pieces
 int rowwin[7], colwin[7];          // Winner's leds coordinates
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int indexled(int row,
              int col) {  // Give the lineare index depending if display is with
-                         // 43 or 79 leds from matrix coordinates
+  // 43 or 79 leds from matrix coordinates
   int index;
 
 #ifdef WS_79_LEDS
@@ -35,7 +34,7 @@ int indexled(int row,
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int indexled(int ledindex) {  // Convert the lineare index depending if display
-                              // is with 43 or 79 leds
+  // is with 43 or 79 leds
   int index;
 
 #ifdef WS_79_LEDS
@@ -66,11 +65,9 @@ void setup_ws() {  // Setup the display
 
   HslColor black = HslColor(0, 0, 0);
 
-  for (int i = 0; i < Nbr_LEDS; i++) {  // turn off the display
-    leds->SetPixelColor(
-        1,
-        black);  // i, i % 2 == 0 ? HslColor(0, 1, 0.5) : HslColor(.3, 1, 0.5));
-  }
+  for (int i = 0; i < Nbr_LEDS; i++) 
+    leds->SetPixelColor(i, black);  // i, i % 2 == 0 ? HslColor(0, 1, 0.5) : HslColor(.3, 1, 0.5));
+  
   leds->Show();
 }
 
@@ -93,7 +90,7 @@ void addpiece_ws(String msg) {  // Decode the payload for a new piece
 
   for (cptposmsg = 0; cptposmsg <= msg.length();
        cptposmsg++) {  // Char by char, from the begin to the end of the payload
-                       // message
+    // message
 
     if (msg[cptposmsg] != '|' &&
         /*msg[cptposmsg] == '\0'*/ cptposmsg != msg.length()) {
@@ -176,7 +173,7 @@ void addpiece_ws(String msg) {  // Decode the payload for a new piece
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void closeaddpiece_ws() {  // Stop the fall down process. Put the new piece at
-                           // is right place
+  // is right place
 
   int cpt;
   newpiece = false;
@@ -454,8 +451,8 @@ void loop_ws() {
                         HslColor(ledhue, 1, cptledlum));
     if (cptledrow < 5) {
       leds->SetPixelColor(
-          indexled(cptledrow + 1, ledcol),
-          HslColor(ledhue, 1, floor((ledlum - cptledlum) * 100) / 100));
+        indexled(cptledrow + 1, ledcol),
+        HslColor(ledhue, 1, floor((ledlum - cptledlum) * 100) / 100));
     }
     leds->Show();
 

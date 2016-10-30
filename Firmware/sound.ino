@@ -88,6 +88,7 @@ void sound_on() {
   Serial.println("Sound on");
 #endif
   if (sound_duty_cycle > 1) {
+    next_note = 0;
     next_tone_duration = 0;
   }
 }
@@ -102,8 +103,7 @@ void loop_sound() {
   int f = 0;
   if (!(next_note % 2)) f = int(current_sound->notes[next_note / 2]);
 #ifdef DEBUG
-  Serial.print("play sound, freq : ");
-  Serial.println(f);
+  Serial.println(String("play sound, freq : ") + f);
 #endif
   if (f != 0) {
     analogWriteFreq(f);

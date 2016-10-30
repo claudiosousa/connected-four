@@ -56,28 +56,21 @@ void mqtt_callback(char* _topic, byte* payload, unsigned int length) {
 #endif
 
   char msgArray[length + 1];
-  for (unsigned int i = 0; i < length; i++) { //use memset
-    msgArray[i] = (char)payload[i];
-  }
-  msgArray[length] = '\0';
-  String msg = String(msgArray);
+  memcpy(msgArray, payload, length);
+  msgArray[length] = 0;
   String topic = String(_topic);
 
   if (topic == String("ping"))
     return publish_mqtt("pong/" + device_id, NULL);
   if (topic == String(device_id + "/volume"))
-    return setvolume(msg.toInt());
-
-  if (newpiece == true)
-    closeaddpiece_ws();
-
+    return setvolume(String(msgArray).toInt());
   if (topic == String(device_id + "/gamefinished"))
-    return gamefinished_ws(msg);
+    return set_game_finished(msgArray);
   if (topic == String(device_id + "/addpiece"))
-    return addpiece_ws(msg);
+    return addpiece(msgArray);
   if (topic == String(device_id + "/devicecolor"))
     return setdevicecolor(msgArray);
   if (topic == String(device_id + "/setboard"))
-    return boardsetting(msg);
+    return set_board_pieces(msgArray);
 }
 

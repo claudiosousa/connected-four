@@ -1,4 +1,4 @@
-#include <ESP8266WiFi.h>
+#include <ESP8266WiFi.h>   
 #include <WiFiManager.h>
 
 void setup_wifi() {
@@ -11,7 +11,7 @@ void setup_wifi() {
   WiFiManager wifiManager;
   // wifiManager.resetSettings();//reset saved settings;
 
-  wifiManager.autoConnect(("Connect4-" + device_id).c_str());
+  wifiManager.autoConnect(WIFI_HOSTNAME);
 
 #ifdef DEBUG
   Serial.println("");

@@ -54,7 +54,7 @@ void setup_capacitive() {
 
   if (c != 0x24) return;
 
-  setThreshholds(6, 3);
+  setThreshholds(12, 6);
 
   writeRegister(MPR121_MHDR, 0x01);
   writeRegister(MPR121_NHDR, 0x01);
@@ -75,8 +75,7 @@ void setup_capacitive() {
   writeRegister(MPR121_CONFIG2, 0x3A);  // 0.5uS encoding, 1ms period
 
   // enable all electrodes
-  writeRegister(MPR121_ECR,
-                0x8F);  // start with first 5 bits of baseline tracking
+  writeRegister(MPR121_ECR, 0x8F); // start with first 5 bits of baseline tracking
 }
 
 void setThreshholds(uint8_t touch, uint8_t release) {
@@ -86,17 +85,38 @@ void setThreshholds(uint8_t touch, uint8_t release) {
   }
 }
 
-uint16_t get_touches(void) {
+int touchesref[7];
+byte get_touches() {
+  if (touchesref[0] == 0)
+    read_touches(touchesref);
+  byte res = 0;
+  int touches[7];
+  read_touches(touches);
+  for (int i = 0; i < 7; i++){
+    if ((touchesref[i] - touches[i] >= 3))
+      res |=  1 << i;
+      touchesref[i] = (float)touchesref[i]*0.8+(float)touches[i]*0.2;
+  }
+  return res;
+}
+
+void read_touches(int * res) {
+  for (int i = 0; i < 7; i++)
+    res[i] = readRegister16(MPR121_FILTDATA_0L + i * 2);
+}
+
+uint16_t get_touches__old(void) {
+
   uint16_t t = readRegister16(MPR121_TOUCHSTATUS_L);
   return t & 0x0FFF;
 }
+
 
 uint8_t readRegister8(uint8_t reg) {
   Wire.beginTransmission(MPR121_I2CADDR_DEFAULT);
   Wire.write(reg);
   Wire.endTransmission(false);
-  while (Wire.requestFrom(MPR121_I2CADDR_DEFAULT, 1) != 1)
-    ;
+  while (Wire.requestFrom(MPR121_I2CADDR_DEFAULT, 1) != 1);
   return (Wire.read());
 }
 
@@ -104,8 +124,7 @@ uint16_t readRegister16(uint8_t reg) {
   Wire.beginTransmission(MPR121_I2CADDR_DEFAULT);
   Wire.write(reg);
   Wire.endTransmission(false);
-  while (Wire.requestFrom(MPR121_I2CADDR_DEFAULT, 2) != 2)
-    ;
+  while (Wire.requestFrom(MPR121_I2CADDR_DEFAULT, 2) != 2);
   uint16_t v = Wire.read();
   v |= ((uint16_t)Wire.read()) << 8;
   return v;

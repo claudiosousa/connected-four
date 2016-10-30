@@ -10,7 +10,7 @@ void setup() {
 #endif
 
   setup_sound();
-  setup_ws();
+  setup_leds();
   setup_buttons();
   setup_wifi();
   setup_OTA();
@@ -19,9 +19,8 @@ void setup() {
 
 void loop() {
   loop_OTA();
-  loop_mqtt();
   loop_buttons();
-  loop_user();
-  loop_ws();
+  loop_leds();
+  loop_mqtt();
   loop_sound();
 }

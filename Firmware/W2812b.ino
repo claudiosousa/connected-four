@@ -1,501 +1,257 @@
 #include <NeoPixelBus.h>
 
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* leds;  // Initialise a pointer for the led's datas.
+HslColor black = HslColor(0, 0, 0);
 
-boolean newpiece = false, canplayswinlost = true;  // Is a new piece is adding.
-// Used when last piece is
-// added ( don't stop the
-// fall down process)
-unsigned long addpiecemillis, winlostmillis;  // Time delay
-int cptledrow;  // For the loops process, add a piece with fall down
-float ledcol, ledrow, ledhue, ledlum,
-      cptledlum;  // For the loops process, add a piece with fall down
-int Nbr_LEDS;
+const byte STATUS_ANIMATION_STEPS = 20;
+const byte STATUS_ANIMATION_STEP_INTERVAL = 50;
+const byte DROP_PIECE_ANIMATION_STEP_INTERVAL = 20;
+const byte DROP_PIECE_ANIMATION_STEPS = 5;
+const byte FINISH_ANIMATION_INTERVAL = 250;
 
-int nbrwinleds, winlostonoffstat;  // number of winner's leds. On off blink
-// status for win, lost game
-float huewin, lumwin;              // hue and lum of winner's pieces
-int rowwin[7], colwin[7];          // Winner's leds coordinates
+typedef struct {
+  float hue;
+  float lum;
+  bool blink;
+  int anim_step;
+  int anim_dir;
+  unsigned long anim_last;
+} status_anim_t;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int indexled(int row,
-             int col) {  // Give the lineare index depending if display is with
-  // 43 or 79 leds from matrix coordinates
-  int index;
+status_anim_t status_anim;
+
+typedef struct {
+  int ledcount;
+  int winleds[7];
+  bool anim_visible;
+  HslColor color;
+  unsigned long anim_last;
+  bool animate;
+  int sound_to_play;
+} finish_anim_t;
+
+finish_anim_t finish_anim;
+
+typedef struct {
+  int col;
+  int row;
+  int anim_row;
+  byte anim_step;
+  unsigned long anim_last;
+  float hue;
+  float lum;
+  bool animate;
+} addpiece_anim_t;
+
+addpiece_anim_t addpiece_anim;
 
 #ifdef WS_79_LEDS
-  index = (row * 7 + col) * 2 - row;
+const int LED_COUNT = 79;
 #else
-  index = row * 7 + col;
+const int LED_COUNT = 43;
 #endif
 
+int indexled(int col, int row) {
+  int index = row * 7 + col;
+#ifdef WS_79_LEDS
+  index = index  * 2 - row;
+#endif
   return index;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int indexled(int ledindex) {  // Convert the lineare index depending if display
-  // is with 43 or 79 leds
-  int index;
-
+int indexled(int ledindex) {
 #ifdef WS_79_LEDS
-  index = ledindex * 2 - ledindex / 7;
+  retun ledindex * 2 - ledindex / 7;
 #else
-  index = ledindex;
+  return ledindex;
 #endif
-  return index;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void setup_ws() {  // Setup the display
+void setup_leds() {
+  status_anim.blink = false;
+  finish_anim.animate = false;
+  addpiece_anim.animate = false;
 
-#ifdef WS_79_LEDS
-  Nbr_LEDS = 79;
-#else
-  Nbr_LEDS = 43;
-#endif
-
-  // led = new NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod>(Nbr_LEDS,
-  // PIN_WS);
-
-  // Pin Not used by the methode "Neo800KbpsMethod". This methode use the RX0
-  // pin (GIPO03)
-  leds = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(Nbr_LEDS, 2);
-
+  leds = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(LED_COUNT, 2);
   leds->Begin();
 
-  HslColor black = HslColor(0, 0, 0);
+  for (int i = 0; i < LED_COUNT; i++)
+    leds->SetPixelColor(i, black);
 
-  for (int i = 0; i < Nbr_LEDS; i++) 
-    leds->SetPixelColor(i, black);  // i, i % 2 == 0 ? HslColor(0, 1, 0.5) : HslColor(.3, 1, 0.5));
-  
   leds->Show();
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void addpiece_ws(String msg) {  // Decode the payload for a new piece
-  unsigned int cptposmsg, cptpossubmsg;
-  int infonum, lednum;
-  String strledcol, strledrow, strledhue, strledlum, struserstat;
-  char submes[16];
-
-#ifdef DEBUG
-  Serial.println("Decoding message for addpiece.");
-#endif
-  play_submitmove();  // Start to play "submit move" sound
-
-  // Extract character by character the informations from payload message.
-
-  infonum = 0;
-  cptpossubmsg = 0;
-
-  for (cptposmsg = 0; cptposmsg <= msg.length();
-       cptposmsg++) {  // Char by char, from the begin to the end of the payload
-    // message
-
-    if (msg[cptposmsg] != '|' &&
-        /*msg[cptposmsg] == '\0'*/ cptposmsg != msg.length()) {
-      submes[cptpossubmsg] = msg[cptposmsg];
-      cptpossubmsg++;
-    } else {
-      submes[cptpossubmsg] = '\0';
-      cptpossubmsg = 0;
-      infonum++;
-
-#ifdef DEBUG
-      Serial.print("infonum = ");
-      Serial.println(infonum);
-      Serial.print("submes = ");
-      Serial.println(submes);
-#endif
-
-      switch (infonum) {
-        case 1:
-          strledrow = String(submes);
-          break;
-
-        case 2:
-          // ledcol = submes.string().ToFloat();
-          strledcol = String(submes);
-          break;
-
-        case 3:
-          strledhue = String(submes);
-          break;
-
-        case 4:
-          strledlum = String(submes);
-          break;
-
-        case 5:
-          struserstat = String(submes);
-#ifdef DEBUG
-          Serial.print("struserstat = ");
-          Serial.println(struserstat);
-#endif
-          if (struserstat == "0") user_turn = false;
-          if (struserstat == "1") user_turn = true;
-          break;
-
-        default:
-#ifdef DEBUG
-          Serial.println("case default reach !");
-#endif
-          ;
-      }
-    }
-  }
-  // Convert datas
-  ledcol = strledcol.toFloat();
-  ledrow = strledrow.toFloat();
-  ledhue = strledhue.toFloat();
-  ledlum = strledlum.toFloat();
-  lednum = indexled(ledrow,
-                    ledcol);  // Rows and columns are inverted in the hardware.
-
-#ifdef DEBUG
-  Serial.print("Valeurs décodées, colonne : ");
-  Serial.print(ledcol);
-  Serial.print(", ligne : ");
-  Serial.print(ledrow);
-  Serial.print(", hue : ");
-  Serial.print(ledhue);
-  Serial.print(", lum : ");
-  Serial.println(ledlum);
-  Serial.print("LED number concerned : ");
-  Serial.print(lednum);
-#endif
-
-  cptledrow = 5;
-  cptledlum = 0;
-  addpiecemillis = millis();
-  newpiece = true;  // Enable the add piece with fall down process
+void loop_leds() {
+  animate_status_led();
+  animate_drop_piece();
+  animate_game_finish();
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void closeaddpiece_ws() {  // Stop the fall down process. Put the new piece at
-  // is right place
+void set_device_status(float hue, float lum, bool blink) {
+  status_anim.hue = hue;
+  status_anim.lum = lum;
+  status_anim.anim_step = STATUS_ANIMATION_STEPS;
+  status_anim.anim_dir = -1;
+  status_anim.anim_last = 0;
+  set_device_status_blink(blink);
+}
 
-  int cpt;
-  newpiece = false;
-  addpiecemillis = millis();
+void set_device_status_blink(bool blink) {
+  status_anim.blink = blink;
+  update_status_led(status_anim.lum);
+}
+
+void drop_piece(int ledrow, int ledcol, float hue, float lum) {
+  stop_dropping_piece();
+
+  play_submitmove();
+
+  addpiece_anim.col = ledcol;
+  addpiece_anim.row = ledrow;
+  addpiece_anim.anim_step = 0;
+  addpiece_anim.anim_row = 5;
+  addpiece_anim.anim_last = 0;
+  addpiece_anim.hue = hue;
+  addpiece_anim.lum = lum;
+  addpiece_anim.animate = true;
+}
+
+void stop_dropping_piece() {
+  if (!addpiece_anim.animate)
+    return;
+  addpiece_anim.animate = false;
 
 #ifdef DEBUG
-  Serial.println("Close addpiece");
+  Serial.println("stop_dropping_piece");
 #endif
 
-  for (cpt = ledrow + 1; cpt <= 5; cpt++) {
-    leds->SetPixelColor(indexled(cpt, ledcol), HslColor(0, 0, 0));
-#ifdef DEBUG
-    Serial.print("row to put to black : ");
-    Serial.println(cpt);
-#endif
-  }
-  leds->SetPixelColor(indexled(ledrow, ledcol), HslColor(ledhue, 1, ledlum));
+  for (int i = addpiece_anim.row + 1; i <= 5; i++)
+    leds->SetPixelColor(indexled(addpiece_anim.col, i), black);
+
+  leds->SetPixelColor(indexled(addpiece_anim.col, addpiece_anim.row), HslColor(addpiece_anim.hue, 1, addpiece_anim.lum));
   leds->Show();
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void boardsetting(String msg) {  // Decode the payload to set up the board
-  float hue[3], lum[3];
-  int code = 0;
-  unsigned int cptposmsg, cptpossubmsg;
-  int /*cptled,*/ cptinfo;
-  char submsg[32];
-  String strsubmsg;
 
-  winloststatus = -1;
-  canplayswinlost = true;
+void set_board_pieces(char *  msg) {
+#ifdef DEBUG
+  Serial.println("set_board_pieces");
+#endif
 
-  for (int i = 0; i < 3; i++) {
-    hue[i] = 0;
-    lum[i] = 0;
+  stop_dropping_piece();
+  finish_anim.animate = false;
+
+  split_to_array(msg);
+
+  HslColor colors[3] = {black,
+                        HslColor(String(splitted[0]).toFloat(), 1., String(splitted[1]).toFloat()),
+                        HslColor(String(splitted[2]).toFloat(), 1., String(splitted[3]).toFloat())
+                       };
+  int pos = 0;
+  char c;
+  while (c = *(splitted[4] + pos)) {
+    Serial.println(String("set pixel: ") + pos + " :" + (int)(c - '0'));
+    leds->SetPixelColor(pos, colors[(int)(c - '0')]);
+    pos++;
   }
 
-#ifdef DEBUG
-  Serial.println("Board received");
-#endif
-
-  cptposmsg = 0;
-  cptpossubmsg = 0;
-  /*cptled = 0;*/
-  cptinfo = 0;
-
-  while (cptposmsg <= msg.length() && (cptinfo - 5) < 42) {
-    if ((msg[cptposmsg] != '|' && msg[cptposmsg] != '\0') && (cptinfo < 4)) {
-      submsg[cptpossubmsg] = msg[cptposmsg];
-      cptpossubmsg++;
-      /* #ifdef DEBUG
-            Serial.print("cptinfo <=4, decoding one char before | or \0");
-        #endif */
-    } else {
-      if (cptinfo >= 4) {
-        submsg[cptpossubmsg] = msg[cptposmsg];
-        cptpossubmsg++;
-#ifdef DEBUG
-        Serial.println("cptinfo > 4, decoding one char only");
-#endif
-      }
-
-      submsg[cptpossubmsg] = '\0';
-      cptpossubmsg = 0;
-      strsubmsg = String(submsg);
-      cptinfo++;
+  leds->Show();
 
 #ifdef DEBUG
-      Serial.print("Led n° : ");
-      Serial.println(cptinfo - 5);
-      Serial.print("cptposmsg : ");
-      Serial.println(cptposmsg);
-      Serial.print("cptpossubmsg : ");
-      Serial.println(cptpossubmsg);
-      Serial.print("cptinfo : ");
-      Serial.println(cptinfo);
-      Serial.print("submsg : ");
-      Serial.println(String(submsg));
-      Serial.println();
+  Serial.println("set_board_pieces_finished");
 #endif
+}
 
-      if (cptinfo == 1) {
-        hue[1] = strsubmsg.toFloat();
-      }
+void set_game_finished_pieces(float hue, float  lum, char * pieces, bool won) {
+  finish_anim.anim_visible = false;
+  finish_anim.anim_last = 0;
+  finish_anim.color.H = hue;
+  finish_anim.color.L = lum;
+  finish_anim.color.S = 1;
+  finish_anim.animate = true;
+  finish_anim.sound_to_play = won ? 1 : 2;
 
-      if (cptinfo == 2) {
-        lum[1] = strsubmsg.toFloat();
-      }
-
-      if (cptinfo == 3) {
-        hue[2] = strsubmsg.toFloat();
-      }
-
-      if (cptinfo == 4) {
-        lum[2] = strsubmsg.toFloat();
-      }
-
-#ifdef DEBUG
-      if (cptinfo <= 4) {
-        Serial.print("hue 0 : ");
-        Serial.println(hue[0]);
-        Serial.print("lum 0 : ");
-        Serial.println(lum[0]);
-        Serial.print("hue 1 : ");
-        Serial.println(hue[1]);
-        Serial.print("lum 1 : ");
-        Serial.println(lum[1]);
-        Serial.print("hue 2 : ");
-        Serial.println(hue[2]);
-        Serial.print("lum 2 : ");
-        Serial.println(lum[2]);
-      }
-#endif
-
-      if (cptinfo > 4) {
-        code = strsubmsg.toInt();
-        leds->SetPixelColor(indexled(cptinfo - 5),
-                            HslColor(hue[code], 1, lum[code]));
-
-#ifdef DEBUG
-        Serial.print("led : ");
-        Serial.println(cptinfo - 5);
-        Serial.print("Player : ");
-        Serial.println(code);
-#endif
-      }
-    }
-    cptposmsg++;
+  finish_anim.ledcount = 0;
+  char c;
+  while (c = *(pieces + finish_anim.ledcount * 2)) {
+    finish_anim.winleds[finish_anim.ledcount] = indexled(*(pieces + finish_anim.ledcount * 2 + 1) - '0', c - '0');
+    finish_anim.ledcount++;
   }
+}
+
+void update_status_led(float lum) {
+  leds->SetPixelColor(LED_COUNT - 1, HslColor(status_anim.hue, 1, lum));
   leds->Show();
 }
 
-void loop_user() {  // Blink the led when neded.
+void animate_status_led() {
+  if (!status_anim.blink)
+    return;
 
-  float steplum;
+  if (millis() - status_anim.anim_last < STATUS_ANIMATION_STEP_INTERVAL)
+    return;
 
-  if (user_turn == false) {  // Not user's turn
-    blinklum = devicecolor[1];
-    blinkmillis = millis();
-    lumstep = 20;
-    dir = -1;
-  } else {
-    // Serial.print("-");
-    if (millis() - blinkmillis >= 20) {
-      // Serial.println(".");
-      blinkmillis = millis();
-      steplum = devicecolor[1] / 20;
-      lumstep = lumstep + dir;
-      if (lumstep >= 50) dir = -1;
-      if (lumstep <= 0) dir = 1;
+  status_anim.anim_last = millis();
 
-      blinklum = steplum * lumstep;
-    }
-  }
+  status_anim.anim_step += status_anim.anim_dir;
 
-  leds->SetPixelColor(Nbr_LEDS - 1, HslColor(devicecolor[0], 1, blinklum));
+  if (status_anim.anim_step == STATUS_ANIMATION_STEPS || status_anim.anim_step == 0)
+    status_anim.anim_dir = -status_anim.anim_dir;
+
+  update_status_led(status_anim.lum / STATUS_ANIMATION_STEPS * status_anim.anim_step);
+}
+
+void animate_drop_piece() {
+  if (!addpiece_anim.animate)
+    return;
+
+  if (millis() - addpiece_anim.anim_last < DROP_PIECE_ANIMATION_STEP_INTERVAL)
+    return;
+
+  addpiece_anim.anim_last = millis();
+
+  addpiece_anim.anim_step++;
+
+  leds->SetPixelColor(indexled(addpiece_anim.col, addpiece_anim.anim_row), HslColor(addpiece_anim.hue, 1, addpiece_anim.lum / DROP_PIECE_ANIMATION_STEPS * addpiece_anim.anim_step));
+  if (addpiece_anim.anim_row < 5)
+    leds->SetPixelColor(indexled(addpiece_anim.col, addpiece_anim.anim_row + 1), HslColor(addpiece_anim.hue, 1, addpiece_anim.lum / DROP_PIECE_ANIMATION_STEPS * (DROP_PIECE_ANIMATION_STEPS - addpiece_anim.anim_step)));
+
   leds->Show();
-}
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void gamefinished_ws(String msg) {  // Decode the payload when game is finished
 
-  int code = 0;
-  unsigned int cptposmsg, cptpossubmsg;
-  int cptinfo;
-  char submsg[32];
-  String strsubmsg;
-
-  user_turn = true;  // Put to blink user's led
-  winlostmillis = millis();
-  winlostonoffstat = 0;
-
-#ifdef DEBUG
-  Serial.println("Game finished received");
-#endif
-
-  cptposmsg = 0;
-  cptpossubmsg = 0;
-  cptinfo = 0;
-
-  while (cptposmsg < msg.length()) {
-    if ((msg[cptposmsg] != '|' && msg[cptposmsg] != '\0') && (cptinfo < 3)) {
-      submsg[cptpossubmsg] = msg[cptposmsg];
-      cptpossubmsg++;
-      /* #ifdef DEBUG
-            Serial.print("cptinfo < 3, decoding one char before | or \0");
-        #endif */
-    } else {
-      if (cptinfo >= 3) {
-        submsg[cptpossubmsg] = msg[cptposmsg];
-        cptpossubmsg++;
-#ifdef DEBUG
-        Serial.print("cptinfo > ");
-        Serial.print(cptinfo);
-        Serial.println(", decoding one char only");
-#endif
-      }
-
-      submsg[cptpossubmsg] = '\0';
-      cptpossubmsg = 0;
-      strsubmsg = String(submsg);
-      cptinfo++;
-
-      if (cptinfo == 1) {
-        winloststatus = strsubmsg.toFloat();
-#ifdef DEBUG
-        Serial.print("winloststatus = ");
-        Serial.println(winloststatus);
-#endif
-      }
-
-      if (cptinfo == 2) {
-        huewin = strsubmsg.toFloat();
-#ifdef DEBUG
-        Serial.print("huewin = ");
-        Serial.println(huewin);
-#endif
-      }
-
-      if (cptinfo == 3) {
-        lumwin = strsubmsg.toFloat();
-#ifdef DEBUG
-        Serial.print("lumwin = ");
-        Serial.println(lumwin);
-#endif
-      }
-
-      if (cptinfo > 3) {
-        code = strsubmsg.toInt();
-        if (cptinfo % 2 == 0) {
-          rowwin[int(floor(cptinfo / 2) - 2)] = code;
-#ifdef DEBUG
-          Serial.print("cptinfo = ");
-          Serial.print(cptinfo);
-          Serial.print(" - led n° = ");
-          Serial.println(floor(cptinfo / 2) - 2);
-          Serial.print("row = ");
-          Serial.println(rowwin[int(floor(cptinfo / 2) - 2)]);
-#endif
-        } else {
-          colwin[int(floor(cptinfo / 2) - 2)] = code;
-#ifdef DEBUG
-          Serial.print("cptinfo = ");
-          Serial.print(cptinfo);
-          Serial.print(" - led n° = ");
-          Serial.println(floor(cptinfo / 2) - 2);
-          Serial.print("col = ");
-          Serial.println(colwin[int(floor(cptinfo / 2) - 2)]);
-#endif
-        }
-      }
-      nbrwinleds = int(floor(cptinfo / 2) - 2) + 1;
-    }
-    cptposmsg++;
+  if (addpiece_anim.anim_step == DROP_PIECE_ANIMATION_STEPS) {
+    addpiece_anim.anim_step = 0;
+    addpiece_anim.anim_row--;
+    if (addpiece_anim.anim_row < addpiece_anim.row)
+      addpiece_anim.animate = false;
   }
-#ifdef DEBUG
-  Serial.print("nbrwinleds = ");
-  Serial.print(nbrwinleds);
-#endif
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void loop_ws() {
-  int cpt;
+void animate_game_finish() {
 
-  /////////////////////////////////////////////////////////////////////// Add
-  ///piece loop with shading effect
-  if ((newpiece == true) && (millis() - addpiecemillis >= 10)) {
-    addpiecemillis = millis();
+  if (addpiece_anim.animate) //animate winning piece drop first
+    return;
 
-#ifdef DEBUG
-    Serial.println(cptledlum, 6);
-#endif
+  if (!finish_anim.animate)
+    return;
 
-    leds->SetPixelColor(indexled(cptledrow, ledcol),
-                        HslColor(ledhue, 1, cptledlum));
-    if (cptledrow < 5) {
-      leds->SetPixelColor(
-        indexled(cptledrow + 1, ledcol),
-        HslColor(ledhue, 1, floor((ledlum - cptledlum) * 100) / 100));
-    }
-    leds->Show();
+  if (millis() - finish_anim.anim_last < FINISH_ANIMATION_INTERVAL)
+    return;
 
-    cptledlum = cptledlum + ledlum / 9;
-    if (cptledlum > ledlum) {
-      cptledlum = 0;
-      cptledrow--;
-    }
+  finish_anim.anim_last = millis();
 
-    if (cptledrow < ledrow) {
-      newpiece = false;
-    }
-  }
-
-  /////////////////////////////////////////////////////////////////////// Win /
-  ///Lost loop
-
-  // Wait until addpiece fall down process is ending after receiving "Game
-  // finished" message and start playing the right sound and blink the winner's
-  // leds
-
-  if (newpiece == false && winloststatus != -1 &&
-      (millis() - winlostmillis >= 250)) {
-    winlostmillis = millis();
-
-    if (winloststatus != -1 && canplayswinlost) {
-      if (winloststatus == 0) {
-        play_gameover();
-        canplayswinlost = false;
-      } else {
-        play_win();
-        canplayswinlost = false;
-      }
-    }
-
-    for (cpt = 0; cpt < nbrwinleds; cpt++) {
-      leds->SetPixelColor(indexled(rowwin[cpt], colwin[cpt]),
-                          HslColor(huewin, 1, lumwin * winlostonoffstat));
-    }
-    leds->Show();
-    if (winlostonoffstat == 0)
-      winlostonoffstat = 1;
+  if (finish_anim.sound_to_play) {
+    if (finish_anim.sound_to_play == 1)
+      play_win();
     else
-      winlostonoffstat = 0;
+      play_gameover();
+
+    finish_anim.sound_to_play = 0;
   }
+
+  for (int i = 0; i < finish_anim.ledcount; i++)
+    leds->SetPixelColor(finish_anim.winleds[i], finish_anim.anim_visible ? finish_anim.color : black);
+
+  leds->Show();
+  finish_anim.anim_visible = !finish_anim.anim_visible;
 }
+

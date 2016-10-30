@@ -30,7 +30,7 @@ function buttonPressed(deviceId, message) {
         let winPieces = _([player.hue, player.luminosity])
             .concat(_.flatten(addResult.hasWon.map(p => [p.row, p.col])).join(''))
             .flatten()
-            .join('|')
+            .join('|');
         mqtt.send(player.id, 'gamefinished', '1|' + winPieces);
         mqtt.send(otherPlayer.id, 'gamefinished', '0|' + winPieces);
     }
@@ -61,7 +61,6 @@ function resetGame() {
 }
 
 function sendFullGameToBothDevices() {
-    let wholeBoard = getWholeBoard();
     gameConfig
         .getPlayers()
         .forEach(p => sendFullGameStateToClient(p.id));

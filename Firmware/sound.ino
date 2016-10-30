@@ -1,119 +1,157 @@
-// Partition to play
+/* Manage the sound */
+
+//Partition to play
 typedef struct {
   int length;
-  float* notes;
-  int* durations;
+  float * notes;
+  int * durations;
 } Sound;
 
-Sound* current_sound = NULL;
+Sound * currentSound = NULL;
 
-byte next_note = 0;
-unsigned long next_tone_duration = 0;
+byte nextNote = 0;
+unsigned long nextToneDuration;
 
-// Default volume (0-512)
-int sound_duty_cycle = -1;
-byte sound_gpio = D0;
+// Hardware SETUP
+int SoundDutyCycle = 10; // 0 = 0%, 512 = 50%, 1023 = 100%
+int SoundGPIO = 16;
+
+
 
 // Partitions
-float gameOverSoundNotes[] = {note_B3, note_F4, note_F4, note_F4, note_E4, note_D4, note_C4, note_E3, note_E3, note_C3};
-int gameOverSoundDurations[] = {162, 5, 162, 162, 162, 5,   217, 5, 217, 5, 217, 5, 162, 5,   162, 162, 162, 5, 162, 5};
-Sound gameOverSound = {.length = sizeof(gameOverSoundNotes) / sizeof(float), .notes = gameOverSoundNotes, .durations = gameOverSoundDurations};
+float gameOverSoundNotes[] = {  note_B3, note_F4, note_F4, note_F4, note_E4, note_D4,  note_C4, note_E3, note_E3, note_C3};
+int gameOverSoundDurations[] = {162, 5,  162, 162,  162, 5,  217, 5, 217, 5, 217, 5, 162, 5, 162, 162, 162, 5, 162, 5};
+Sound gameOverSound =  {.length = sizeof(gameOverSoundNotes) / sizeof(float), .notes = gameOverSoundNotes, .durations = gameOverSoundDurations};
 
-float submitMoveSoundNotes[] = {300, 435, 631, 915, 1326, 1923};
+
+float submitMoveSoundNotes[] =  { 300,   435,   631,   915,   1326,  1923};
 int submitMoveSoundDurations[] = {60, 0, 60, 0, 60, 0, 60, 0, 60, 0, 60, 0};
-Sound submitMoveSound = {.length = sizeof(submitMoveSoundNotes) / sizeof(float), .notes = submitMoveSoundNotes, .durations = submitMoveSoundDurations};
+Sound submitMoveSound =  {.length = sizeof(submitMoveSoundNotes) / sizeof(float), .notes = submitMoveSoundNotes, .durations = submitMoveSoundDurations};
 
-float startSoundNotes[] = {note_E5, note_G5, note_E6, note_C6, note_D6, note_G6};
-int startSoundDurations[] = {130, 5, 130, 5, 130, 5, 130, 5, 130, 5, 130};
-Sound startSound = {.length = sizeof(startSoundNotes) / sizeof(float), .notes = startSoundNotes, .durations = startSoundDurations};
+float startSoundNotes[] =  { note_E5, note_G5, note_E6, note_C6, note_D6, note_G6};
+int startSoundDurations[] = {130, 5,  130, 5,  130, 5,  130, 5,  130, 5,  130};
+Sound startSound =  {.length = sizeof(startSoundNotes) / sizeof(float), .notes = startSoundNotes, .durations = startSoundDurations};
 
-float win_sound_notes[] = {
-  note_G2,  note_C3,  note_E3,  note_G3,  note_C4,  note_E4,  note_G4, note_E4,  note_Ab2, note_C3,  note_Eb3, note_Ab3, note_C4,  note_Eb4,
-  note_Ab4, note_Eb4, note_Bb2, note_D3,  note_F3,  note_Bb3, note_D4, note_F4,  note_Bb4, note_B4,  note_B4,  note_B4,  note_C5
-};
+float winSoundNotes[] =  { note_G2, note_C3, note_E3, note_G3, note_C4, note_E4, note_G4, note_E4, note_Ab2, note_C3, note_Eb3, note_Ab3, note_C4, note_Eb4,
+                           note_Ab4, note_Eb4, note_Bb2, note_D3, note_F3, note_Bb3, note_D4, note_F4, note_Bb4, note_B4, note_B4, note_B4, note_C5
+                         };
+int winSoundDurations[] = {130, 2,  130, 2,  130, 2,  130, 2,  130, 2,  130, 2,  433, 2,  433, 2,  130, 2,   130, 2,  130, 2,   130, 2,   130, 2,  130, 5,
+                           433, 2,  433, 2,  130, 2,  130, 2,  130, 2,  130, 2,  130, 2,  130, 2,  433, 2,   130, 2,  130, 2,   130, 2,   650
+                          };
+Sound winSound =  {.length = sizeof(winSoundNotes) / sizeof(float), .notes = winSoundNotes, .durations = winSoundDurations};
 
-int win_sound_duration[] = {
-  130, 2, 130, 2, 130, 2, 130, 2, 130, 2, 130, 2, 433, 2, 433, 2, 130, 2,
-  130, 2, 130, 2, 130, 2, 130, 2, 130, 5, 433, 2, 433, 2, 130, 2, 130, 2,
-  130, 2, 130, 2, 130, 2, 130, 2, 433, 2, 130, 2, 130, 2, 130, 2, 650
-};
-Sound win_sound = {.length = sizeof(win_sound_notes) / sizeof(float), .notes = win_sound_notes, .durations = win_sound_duration};
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setup_sound() {
 #ifdef DEBUG
   Serial.println("Sound setup up");
 #endif
-  sound_off();
+  analogWrite(SoundGPIO, SoundDutyCycle) ;
+  soundoff();
 }
 
-void setvolume(int vol) {
-  if (sound_duty_cycle == -1)  // the device got initialized
-    play_start();
-  sound_duty_cycle = vol;
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void soundvolume(int vol) { //Set up the volume level.
+  SoundDutyCycle = vol;
+
+  if (startgame && winloststatus == -1) {              //Play start game at start
+    startgame = false;
+    playsstartsound();
+  }
 }
 
-void play_start() {
-  current_sound = &startSound;
-  sound_on();
+
+// Which partition to play
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void playsstartsound() {
+  soundoff();
+  currentSound = &startSound;
+  soundon();
 }
 
-void play_submitmove() {
-  current_sound = &submitMoveSound;
-  sound_on();
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void playssubmitMovesound() {
+  currentSound = &submitMoveSound;
+  soundon();
 }
 
-void play_gameover() {
-  current_sound = &gameOverSound;
-  sound_on();
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void playsgameOversound() {
+  currentSound = &gameOverSound;
+  soundon();
 }
 
-void play_win() {
-  current_sound = &win_sound;
-  sound_on();
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void playswinsound() {
+  currentSound = &winSound;
+  soundon();
 }
 
-void sound_off() {
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void soundoff() { //Cut off the sound
 #ifdef DEBUG
   Serial.println("Sound off");
 #endif
-  current_sound = NULL;
-  next_note = 0;
-  next_tone_duration = 0;
-
-  analogWrite(sound_gpio, 0);
+  analogWrite(SoundGPIO, 0) ;
+  currentSound = NULL;
+  playsound = false;
+  nextNote = 0;
+  nextToneDuration = 0;
+  digitalWrite(PINSOUNDON, 0);              // Set PINSOUNDON to disable the sound output, Cut off the 1st 1/2 H bridge.
+  digitalWrite(SoundGPIO, 1);                // Set cut off the 2nd 1/2 H inverted bridge
 }
 
-void sound_on() {
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void soundon() { //Put on the sound
 #ifdef DEBUG
   Serial.println("Sound on");
 #endif
-  if (sound_duty_cycle > 1) {
-    next_note = 0;
-    next_tone_duration = 0;
+  if ( SoundDutyCycle > 1 ) {                // Open audio amplificator and play sound only if sound volume > 1/1024 off duty cycle
+    analogWrite(SoundGPIO, SoundDutyCycle) ;
+    playsound = true;
+    nextToneDuration = millis() + 1;
+    digitalWrite(PINSOUNDON, 1);             // Set PINSOUNDON to enabel the sound output
   }
 }
 
-void loop_sound() {
-  if (current_sound == NULL)
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setvolume(String msg) { //Decode the volume level from the MQTT message
+  soundvolume(msg.toInt());
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void loop_sound() { // Play partitions when neded
+
+  if (/*!currentSound &&*/ !playsound)
     return;
 
-  if (millis() < next_tone_duration)
+  if (millis() < nextToneDuration)
     return;
 
+  /*if (nextNote >= currentSound->length * 2) {
+    soundoff();
+    } else {*/
   int f = 0;
-  if (!(next_note % 2)) f = int(current_sound->notes[next_note / 2]);
+  if (!(nextNote % 2))
+    f = int(currentSound->notes[nextNote / 2]);
 #ifdef DEBUG
-  Serial.println(String("play sound, freq : ") + f);
+  Serial.print("play sound, freq : ");
+  Serial.println(f);
 #endif
   if (f != 0) {
+    analogWrite(SoundGPIO, SoundDutyCycle) ;
     analogWriteFreq(f);
-    analogWrite(sound_gpio, sound_duty_cycle);
-  } else
-    analogWrite(sound_gpio, 0);
-
-  next_tone_duration = millis() + current_sound->durations[next_note];
-  next_note++;
-  if (next_note >= current_sound->length * 2) {
-    sound_off();
   }
+  else
+    analogWrite(SoundGPIO, 0) ;
+
+  nextToneDuration = millis() + currentSound->durations[nextNote];
+  nextNote++;
+  if (nextNote >= currentSound->length * 2) {
+    soundoff();
+  }
+  //}
 }
+

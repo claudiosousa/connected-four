@@ -92,10 +92,10 @@ byte get_touches() {
   byte res = 0;
   int touches[7];
   read_touches(touches);
-  for (int i = 0; i < 7; i++){
+  for (int i = 0; i < 7; i++) {
     if ((touchesref[i] - touches[i] >= 3))
       res |=  1 << i;
-      touchesref[i] = (float)touchesref[i]*0.8+(float)touches[i]*0.2;
+    touchesref[i] = (float)touchesref[i] * 0.8 + (float)touches[i] * 0.2;
   }
   return res;
 }

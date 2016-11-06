@@ -1,6 +1,6 @@
-#define DEBUG
+//#define DEBUG
 //#define WS_79_LEDS //if using a 79 led strip
-#define CAP_MRP121  // if using the capacitiv IC MRP121, instead of CAP1188
+//#define CAP_MRP121  // if using the capacitiv IC MRP121, instead of CAP1188
 
 const String device_id = String(ESP.getChipId(), HEX);  // Get the ID of the ESP8266 device
 

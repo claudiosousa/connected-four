@@ -49,10 +49,10 @@ void loop_buttons() {
   last_buttons_read = millis();
 
   int touched_keys = get_touches();
-  if (!touched_keys || touched_keys == last_touched_keys)
-    return;
-
+  bool skip_reading = !touched_keys || touched_keys == last_touched_keys;
   last_touched_keys = touched_keys;
+  if (skip_reading)
+    return;
 
   for (byte i = 0; i <= 7; i++) {
     String strbuttonnumber;
